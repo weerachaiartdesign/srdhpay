@@ -1,4 +1,4 @@
-<!-- 001.06
+<!-- 001.07
 -->
 
 <!DOCTYPE html>
@@ -29,7 +29,6 @@
 
     <div id="overlay" class="overlay fixed inset-0 z-40" onclick="toggleSidebar()"></div>
 
-    <!-- Login Section -->
     <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-white rounded-3xl card-shadow p-8 animate__animated animate__fadeIn">
             <div class="text-center mb-8">
@@ -44,7 +43,6 @@
         </div>
     </div>
 
-    <!-- Dashboard Section -->
     <div id="dashboardSection" class="hidden flex min-h-screen">
         <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-64 bg-white shadow-2xl sidebar-closed lg:translate-x-0">
             <div class="p-6 border-b"><h2 class="text-2xl font-bold text-purple-700">Srdh-Check</h2></div>
@@ -66,7 +64,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwO7go6fLwU_8fYYb2iwGijmnThAPb5KsKzdtT7-sCo8aC50Z9tLPllEC23XYb1IUU4xA/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz59v5eU38mdlA9eoqxH9zyoVB_PQB5h9YWLh7LwFw8we8NT5ganMerJUbUNBSZQ2oZiQ/exec";
         const API_KEY = "206360sirindhorn";
         let currentUser = JSON.parse(localStorage.getItem('srdh_session')) || null;
 
@@ -79,7 +77,7 @@
                     body: JSON.stringify({ 
                         action, 
                         apiKey: API_KEY, 
-                        requestorEmail: currentUser?.email || '', // ส่ง Email ผู้เรียกไปเช็คสิทธิ์เสมอ
+                        requestorEmail: currentUser?.email || '',
                         payload 
                     })
                 });
@@ -152,8 +150,8 @@
                         <h2 class="text-2xl font-bold">จัดการผู้ใช้งาน</h2>
                         <button onclick="openAddUserModal()" class="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-bold">+ เพิ่มผู้ใช้</button>
                     </div>
-                    <div class="bg-white rounded-3xl card-shadow overflow-hidden">
-                        <table class="w-full text-left text-sm">
+                    <div class="bg-white rounded-3xl card-shadow overflow-x-auto">
+                        <table class="w-full text-left text-sm min-w-[600px]">
                             <thead class="bg-purple-50">
                                 <tr><th class="p-4">ชื่อ</th><th class="p-4">อีเมล</th><th class="p-4">สถานะ</th><th class="p-4">จัดการ</th></tr>
                             </thead>
@@ -163,8 +161,8 @@
                                         <td class="p-4">${u.username}</td><td class="p-4">${u.email}</td>
                                         <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.status}</span></td>
                                         <td class="p-4 flex gap-2">
-                                            <button onclick="resetPass('${u.email}')" class="text-blue-500 font-bold">RESET</button>
-                                            <button onclick="confirmDelete('${u.email}')" class="text-red-500 font-bold">ลบ</button>
+                                            <button onclick="resetPass('${u.email}')" class="text-blue-500 font-bold hover:underline">RESET & ACTIVATE</button>
+                                            <button onclick="confirmDelete('${u.email}')" class="text-red-500 font-bold hover:underline">ลบ</button>
                                         </td>
                                     </tr>`).join('')}
                             </tbody>
@@ -191,21 +189,32 @@
         }
 
         async function resetPass(targetEmail) {
-            const confirm = await Swal.fire({ title: 'ยืนยัน?', text: `รีเซ็ตเป็น 1234 สำหรับ ${targetEmail}`, icon: 'warning', showCancelButton: true });
+            const confirm = await Swal.fire({ 
+                title: 'ยืนยันการรีเซ็ต?', 
+                text: `รหัสผ่านจะถูกเปลี่ยนเป็น 1234 และ "เปิดใช้งาน" บัญชีของ ${targetEmail} ทันที`, 
+                icon: 'warning', 
+                showCancelButton: true,
+                confirmButtonText: 'ตกลง',
+                cancelButtonText: 'ยกเลิก'
+            });
             if (confirm.isConfirmed) {
-                loadingStatus(true, "กำลังรีเซ็ต...");
+                loadingStatus(true, "กำลังรีเซ็ตและเปิดใช้งาน...");
                 const res = await callBackend('adminUpdateUser', { targetEmail, resetPassword: true });
                 loadingStatus(false);
-                if (res.success) Swal.fire('สำเร็จ', 'รีเซ็ตเป็น 1234 แล้ว', 'success');
+                if (res.success) {
+                    Swal.fire('สำเร็จ', res.message, 'success');
+                    showSection('admin_users');
+                }
             }
         }
 
         async function confirmDelete(targetEmail) {
             const { value: type } = await Swal.fire({
-                title: 'ยืนยันการลบ',
+                title: 'จัดการสถานะผู้ใช้',
                 input: 'select',
-                inputOptions: { 'inactive': 'ระงับการใช้งาน', 'purge': 'ลบถาวร' },
-                showCancelButton: true
+                inputOptions: { 'inactive': 'ระงับการใช้งาน', 'purge': 'ลบข้อมูลถาวร' },
+                showCancelButton: true,
+                confirmButtonText: 'ดำเนินการ'
             });
             if (type) {
                 loadingStatus(true, "กำลังดำเนินการ...");
