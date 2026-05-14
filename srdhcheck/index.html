@@ -1,4 +1,4 @@
-<!-- 001.04
+<!-- 001.05
 -->
 
 <!DOCTYPE html>
@@ -6,374 +6,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Srdh-Check | ระบบจัดการข้อมูล</title>
+    <title>Srdh-Check | ระบบจัดการข้อมูลเจ้าหน้าที่</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
         :root {
             --primary: #7C3AED;
-            --sidebar-width: 280px;
+            --primary-light: #A78BFA;
+            --bg-light: #F3E8FF;
+            --text-primary: #4C1D95;
         }
-        body { font-family: 'Prompt', sans-serif; background-color: #F9FAFB; }
+        body { font-family: 'Prompt', sans-serif; background-color: var(--bg-light); color: var(--text-primary); overflow-x: hidden; }
+        .purple-gradient { background: linear-gradient(135deg, #7C3AED, #A855F7); }
+        .card-shadow { box-shadow: 0 10px 15px -3px rgb(124 58 237 / 0.1); }
+        .input-field { @apply w-full p-3 border border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all; }
         
         /* Sidebar Styles */
-        .sidebar {
-            width: var(--sidebar-width);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 50;
-        }
-        .sidebar.closed { transform: translateX(-100%); }
+        #sidebar { transition: all 0.3s ease; z-index: 50; }
+        .sidebar-open { transform: translateX(0); }
+        .sidebar-closed { transform: translateX(-100%); }
+        .menu-item { @apply flex items-center px-6 py-4 text-gray-600 hover:bg-purple-50 hover:text-purple-700 transition-all cursor-pointer border-l-4 border-transparent; }
+        .menu-item.active { @apply bg-purple-100 text-purple-700 border-purple-600; }
         
-        .nav-link {
-            @apply flex items-center px-6 py-4 text-gray-400 hover:bg-purple-50 hover:text-purple-600 transition-all border-l-4 border-transparent;
-        }
-        .nav-link.active {
-            @apply bg-purple-50 text-purple-600 border-purple-600 font-semibold;
-        }
-
-        .main-content { transition: margin-left 0.3s ease; }
-        
-        @media (min-width: 1024px) {
-            .sidebar.closed + .main-content { margin-left: 0; }
-            .main-content { margin-left: var(--sidebar-width); }
-        }
-
-        .card-animate { animation: fadeInUp 0.5s ease-out; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Overlay for mobile */
-        .overlay { display: none; }
-        .sidebar:not(.closed) ~ .overlay { display: block; }
+        .overlay { background: rgba(0,0,0,0.5); display: none; }
+        .overlay.active { display: block; }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body class="min-h-screen">
 
-    <!-- Login Page -->
-    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-600 to-blue-700">
-        <div class="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl card-animate">
+    <!-- Overlay for Mobile Sidebar -->
+    <div id="overlay" class="overlay fixed inset-0 z-40" onclick="toggleSidebar()"></div>
+
+    <!-- Login Section -->
+    <div id="loginSection" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl card-shadow p-8 animate__animated animate__fadeIn">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-2xl mb-4 text-purple-600 text-4xl">
-                    <i class="fas fa-shield-halved"></i>
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-2xl mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.040L3 5.618V12c0 5.234 3.486 9.715 8 11.056 4.514-1.341 8-5.822 8-11.056V5.618l-1.382-.674z" />
+                    </svg>
                 </div>
-                <h1 class="text-3xl font-bold text-gray-800">Srdh-Check</h1>
-                <p class="text-gray-500">ลงชื่อเข้าใช้งานระบบจัดการเจ้าหน้าที่</p>
+                <h1 class="text-3xl font-bold">Srdh-Check</h1>
+                <p class="text-gray-400 mt-2">ลงชื่อเข้าใช้งานเพื่อจัดการข้อมูล</p>
             </div>
             <form id="loginForm" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">อีเมล</label>
-                    <input type="email" id="loginEmail" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" placeholder="example@srdh.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">รหัสผ่าน</label>
-                    <input type="password" id="loginPassword" required class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none" placeholder="••••••••">
-                </div>
-                <button type="submit" class="w-full bg-purple-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-purple-700 transition-all flex items-center justify-center gap-2">
-                    เข้าสู่ระบบ <i class="fas fa-arrow-right"></i>
-                </button>
+                <input type="email" id="loginEmail" placeholder="อีเมลเจ้าหน้าที่" required class="input-field">
+                <input type="password" id="loginPassword" placeholder="รหัสผ่าน" required class="input-field">
+                <button type="submit" class="w-full py-4 purple-gradient text-white rounded-xl font-bold shadow-lg hover:opacity-90 transition-all">เข้าสู่ระบบ</button>
             </form>
         </div>
     </div>
 
-    <!-- Dashboard Layout (Hidden by default) -->
-    <div id="dashboardPage" class="hidden min-h-screen flex">
+    <!-- Main Dashboard Structure (Hidden by default) -->
+    <div id="dashboardSection" class="hidden flex min-h-screen">
+        
         <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 bg-white shadow-xl flex flex-col closed lg:translate-x-0">
-            <div class="p-8 border-b">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white">
-                        <i class="fas fa-check-double"></i>
-                    </div>
-                    <span class="text-xl font-bold text-gray-800 tracking-tight">Srdh-Check</span>
-                </div>
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 w-64 bg-white shadow-2xl sidebar-closed lg:sidebar-open">
+            <div class="p-6 border-b">
+                <h2 class="text-2xl font-bold text-purple-700">Srdh-Check</h2>
+                <p class="text-xs text-gray-400 uppercase tracking-widest mt-1">Main Menu</p>
             </div>
-            
-            <nav class="flex-1 mt-6">
-                <button onclick="switchTab('profile')" id="btn-profile" class="nav-link w-full active">
-                    <i class="fas fa-user-circle w-8"></i> ข้อมูลส่วนตัว
-                </button>
-                <button onclick="switchTab('admin')" id="btn-admin" class="nav-link w-full hidden">
-                    <i class="fas fa-users-cog w-8"></i> จัดการผู้ใช้งาน
-                </button>
-                <div class="px-6 py-4 mt-10 border-t">
-                    <button onclick="handleLogout()" class="flex items-center text-red-500 hover:text-red-700 font-semibold gap-3">
-                        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-                    </button>
-                </div>
+            <nav id="sidebarMenu" class="mt-4">
+                <!-- Menu Items injected by JS -->
             </nav>
         </aside>
 
-        <!-- Main Area -->
-        <main class="main-content flex-1 flex flex-col min-w-0 bg-gray-50">
-            <!-- Header -->
-            <header class="bg-white h-20 shadow-sm flex items-center justify-between px-6 lg:px-10 sticky top-0 z-40">
-                <button onclick="toggleSidebar()" class="lg:hidden text-2xl text-gray-600">
-                    <i class="fas fa-bars"></i>
+        <!-- Content Area -->
+        <main class="flex-1 flex flex-col min-w-0 bg-purple-50/30">
+            <!-- Top Nav -->
+            <header class="bg-white p-4 shadow-sm flex items-center justify-between">
+                <button onclick="toggleSidebar()" class="p-2 rounded-lg hover:bg-gray-100 lg:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>
-                <div id="pageTitle" class="text-xl font-semibold text-gray-800">ข้อมูลส่วนตัว</div>
-                <div class="flex items-center gap-4">
-                    <span id="headerUserName" class="hidden sm:block text-sm font-medium text-gray-600"></span>
-                    <div id="roleBadge" class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"></div>
+                <div id="userBadge" class="flex items-center gap-3">
+                    <span id="navUserName" class="hidden sm:block font-medium">User Name</span>
+                    <div class="w-10 h-10 purple-gradient rounded-full flex items-center justify-center text-white font-bold" id="userInitial">U</div>
                 </div>
             </header>
 
-            <!-- Content Area -->
-            <div class="p-6 lg:p-10 flex-1 overflow-y-auto">
-                
-                <!-- Tab: Profile -->
-                <div id="content-profile" class="max-w-4xl mx-auto space-y-6">
-                    <div class="bg-white rounded-3xl p-8 shadow-sm">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-6">รายละเอียดผู้ใช้งาน</h2>
-                        <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">อีเมล (ห้ามแก้ไข)</label>
-                                <input type="text" id="p-email" disabled class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-400">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">หน่วยงาน (ห้ามแก้ไข)</label>
-                                <input type="text" id="p-dept" disabled class="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-400">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 uppercase mb-2">ชื่อ-นามสกุล</label>
-                                <input type="text" id="p-username" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 uppercase mb-2">ตำแหน่ง</label>
-                                <input type="text" id="p-position" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
-                            </div>
-                            <div class="md:col-span-2 pt-6 border-t border-gray-50">
-                                <h3 class="font-semibold text-purple-600 mb-4">เปลี่ยนรหัสผ่านใหม่ (เว้นว่างไว้หากไม่เปลี่ยน)</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <input type="password" id="p-pass" placeholder="รหัสผ่านใหม่" class="w-full p-3 border border-gray-200 rounded-xl outline-none">
-                                    <input type="password" id="p-confirm" placeholder="ยืนยันรหัสผ่านใหม่" class="w-full p-3 border border-gray-200 rounded-xl outline-none">
-                                </div>
-                            </div>
-                            <div class="md:col-span-2 flex justify-end pt-4">
-                                <button type="submit" class="bg-purple-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg hover:bg-purple-700 transition-all">บันทึกการเปลี่ยนแปลง</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Tab: Admin Management -->
-                <div id="content-admin" class="hidden space-y-6">
-                    <div class="flex justify-between items-center flex-wrap gap-4">
-                        <h2 class="text-2xl font-bold text-gray-800">จัดการข้อมูลเจ้าหน้าที่</h2>
-                        <button onclick="openUserModal()" class="bg-green-500 text-white px-6 py-3 rounded-xl font-bold shadow-md hover:bg-green-600 transition-all flex items-center gap-2">
-                            <i class="fas fa-plus"></i> เพิ่มผู้ใช้ใหม่
-                        </button>
-                    </div>
-                    
-                    <div class="bg-white rounded-3xl shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr>
-                                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">ชื่อ / อีเมล</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">ตำแหน่ง / หน่วยงาน</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">สิทธิ์</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase">สถานะ</th>
-                                        <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase text-center">จัดการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="userTableBody" class="divide-y">
-                                    <!-- User list will be injected here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
+            <!-- Dynamic Content -->
+            <div id="mainContent" class="p-4 lg:p-8">
+                <!-- Content injected here -->
             </div>
         </main>
-
-        <!-- Modal Overlay for Mobile Sidebar -->
-        <div onclick="toggleSidebar()" class="overlay fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwHCQMlrKONb50RWWFldymtq5h3Tg1bXp0wtc8dXYNrQXIPuc34As5SB1XAkqMw_fMBRw/exec"; 
-        const API_KEY = "206360sirindhorn"; 
-        
-        let session = JSON.parse(localStorage.getItem('srdh_user')) || null;
+        const SCRIPT_URL = "ใส่_URL_ที่_Deploy_จาก_GAS_ตรงนี้";
+        const API_KEY = "206360sirindhorn";
+
+        let currentUser = JSON.parse(localStorage.getItem('srdh_session')) || null;
 
         window.onload = () => {
-            if (session) initDashboard();
+            if (currentUser) showDashboard();
         };
 
-        // --- Core Functions ---
-        async function callAPI(action, payload = {}) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        action, 
-                        apiKey: API_KEY, 
-                        requestorEmail: session ? session.email : '',
-                        payload 
-                    })
-                });
-                return await response.json();
-            } catch (err) {
-                console.error(err);
-                return { success: false, message: "การเชื่อมต่อผิดพลาด" };
+        // --- UI Logic ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('sidebar-closed');
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('active');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('navUserName').innerText = currentUser.username;
+            document.getElementById('userInitial').innerText = currentUser.username.charAt(0);
+            renderSidebar();
+            showSection('profile');
+        }
+
+        function renderSidebar() {
+            const menu = document.getElementById('sidebarMenu');
+            let html = `
+                <div class="menu-item active" onclick="showSection('profile')">ข้อมูลส่วนตัว</div>
+            `;
+            if (currentUser.role === 'admin') {
+                html += `
+                    <div class="menu-item" onclick="showSection('admin_users')">จัดการผู้ใช้งาน</div>
+                `;
+            }
+            html += `<div class="menu-item text-red-500 mt-10" onclick="handleLogout()">ออกจากระบบ</div>`;
+            menu.innerHTML = html;
+        }
+
+        async function showSection(section) {
+            const container = document.getElementById('mainContent');
+            
+            // ปรับสถานะ Active Menu
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            event?.target?.classList?.add('active');
+
+            if (section === 'profile') {
+                container.innerHTML = `
+                    <div class="max-w-4xl mx-auto bg-white rounded-3xl p-8 card-shadow animate__animated animate__fadeIn">
+                        <h2 class="text-2xl font-bold mb-6">ข้อมูลส่วนตัว</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div><label class="text-sm text-gray-400">อีเมล</label><input class="input-field bg-gray-50" value="${currentUser.email}" disabled></div>
+                            <div><label class="text-sm text-gray-400">สิทธิ์ผู้ใช้งาน</label><input class="input-field bg-gray-50" value="${currentUser.role.toUpperCase()}" disabled></div>
+                            <div><label class="text-sm text-gray-400">ชื่อ-นามสกุล</label><input id="p_name" class="input-field" value="${currentUser.username}"></div>
+                            <div><label class="text-sm text-gray-400">ตำแหน่ง</label><input id="p_pos" class="input-field" value="${currentUser.position || ''}"></div>
+                        </div>
+                        <button onclick="updateProfile()" class="mt-8 px-8 py-3 purple-gradient text-white rounded-xl font-bold shadow-md">บันทึกการเปลี่ยนแปลง</button>
+                    </div>
+                `;
+            } else if (section === 'admin_users') {
+                container.innerHTML = `<div class="text-center py-10">กำลังโหลดรายชื่อผู้ใช้...</div>`;
+                const res = await callBackend('adminGetAllUsers');
+                if (res.success) {
+                    let tableHTML = `
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">จัดการผู้ใช้งาน</h2>
+                            <button onclick="openAddUserModal()" class="px-6 py-2 bg-green-500 text-white rounded-xl font-bold shadow-sm">+ เพิ่มผู้ใช้</button>
+                        </div>
+                        <div class="bg-white rounded-3xl card-shadow overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-purple-50 text-purple-700">
+                                    <tr>
+                                        <th class="p-4">ชื่อ</th><th class="p-4">อีเมล</th><th class="p-4">สิทธิ์</th><th class="p-4">สถานะ</th><th class="p-4">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${res.data.map(u => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="p-4">${u.username}</td>
+                                            <td class="p-4">${u.email}</td>
+                                            <td class="p-4 text-xs font-bold">${u.role.toUpperCase()}</td>
+                                            <td class="p-4"><span class="px-3 py-1 rounded-full text-xs ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${u.status}</span></td>
+                                            <td class="p-4 flex gap-2">
+                                                <button onclick="resetPassword('${u.email}')" class="text-blue-500 text-xs font-bold">RESET</button>
+                                                <button onclick="confirmDelete('${u.email}')" class="text-red-500 text-xs font-bold">ลบ</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    container.innerHTML = tableHTML;
+                }
             }
         }
 
-        function showLoading(text = 'กำลังโหลด...') {
-            Swal.fire({ title: text, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        // --- Backend Communication ---
+        async function callBackend(action, payload = {}) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, apiKey: API_KEY, payload })
+                });
+                return await response.json();
+            } catch (err) {
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+                return { success: false };
+            }
         }
 
-        // --- Auth ---
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
-            showLoading('กำลังเข้าสู่ระบบ...');
-            const res = await callAPI('login', { 
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            });
-            Swal.close();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            loadingStatus(true, "กำลังตรวจสอบสิทธิ์...");
+            const res = await callBackend('login', { email, password });
+            loadingStatus(false);
 
             if (res.success) {
-                session = res.user;
-                localStorage.setItem('srdh_user', JSON.stringify(session));
-                initDashboard();
+                localStorage.setItem('srdh_session', JSON.stringify(res.user));
+                currentUser = res.user;
+                showDashboard();
             } else {
                 Swal.fire('ล้มเหลว', res.message, 'error');
             }
         };
 
-        function handleLogout() {
-            localStorage.removeItem('srdh_user');
-            location.reload();
+        async function handleLogout() {
+            loadingStatus(true, "คุณกำลังออกจากระบบ...");
+            localStorage.removeItem('srdh_session');
+            setTimeout(() => location.reload(), 1000);
         }
 
-        // --- UI Logic ---
-        function initDashboard() {
-            document.getElementById('loginPage').classList.add('hidden');
-            document.getElementById('dashboardPage').classList.remove('hidden');
-            document.getElementById('headerUserName').innerText = `คุณ${session.username}`;
-            
-            const badge = document.getElementById('roleBadge');
-            badge.innerText = session.role;
-            badge.className = session.role === 'admin' ? 
-                'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-600' : 
-                'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-600';
-
-            if (session.role === 'admin') {
-                document.getElementById('btn-admin').classList.remove('hidden');
-            }
-            switchTab('profile');
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('closed');
-        }
-
-        function switchTab(tab) {
-            document.querySelectorAll('[id^="content-"]').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(`content-${tab}`).classList.remove('hidden');
-            document.getElementById(`btn-${tab}`).classList.add('active');
-            document.getElementById('pageTitle').innerText = tab === 'admin' ? 'จัดการผู้ใช้งาน' : 'ข้อมูลส่วนตัว';
-            
-            if (window.innerWidth < 1024) toggleSidebar();
-            if (tab === 'profile') loadProfile();
-            if (tab === 'admin') loadUsers();
-        }
-
-        // --- Profile Logic ---
-        async function loadProfile() {
-            showLoading();
-            const res = await callAPI('getUserData', { email: session.email });
-            Swal.close();
-            if (res.success) {
-                document.getElementById('p-email').value = res.data.email;
-                document.getElementById('p-dept').value = res.data.dept;
-                document.getElementById('p-username').value = res.data.username;
-                document.getElementById('p-position').value = res.data.position;
-            }
-        }
-
-        document.getElementById('profileForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const pass = document.getElementById('p-pass').value;
-            if (pass && pass !== document.getElementById('p-confirm').value) {
-                return Swal.fire('ตรวจสอบ', 'รหัสผ่านไม่ตรงกัน', 'warning');
-            }
-
-            showLoading('กำลังบันทึก...');
-            const res = await callAPI('updateSelf', {
-                email: session.email,
-                username: document.getElementById('p-username').value,
-                position: document.getElementById('p-position').value,
-                password: pass || null
+        async function resetPassword(targetEmail) {
+            const confirm = await Swal.fire({
+                title: 'รีเซ็ตรหัสผ่าน?',
+                text: `ต้องการตั้งรหัสผ่านใหม่เป็น 1234 สำหรับ ${targetEmail} ใช่หรือไม่?`,
+                icon: 'warning',
+                showCancelButton: true
             });
-            
-            if (res.success) {
-                Swal.fire('สำเร็จ', 'บันทึกข้อมูลแล้ว', 'success');
-                session.username = document.getElementById('p-username').value;
-                localStorage.setItem('srdh_user', JSON.stringify(session));
-                document.getElementById('headerUserName').innerText = `คุณ${session.username}`;
+            if (confirm.isConfirmed) {
+                loadingStatus(true, "กำลังดำเนินการ...");
+                const res = await callBackend('adminUpdateUser', { targetEmail, resetPassword: true });
+                loadingStatus(false);
+                if (res.success) Swal.fire('สำเร็จ', 'รีเซ็ตรหัสผ่านเป็น 1234 แล้ว', 'success');
             }
-        };
-
-        // --- Admin Logic ---
-        async function loadUsers() {
-            showLoading();
-            const res = await callAPI('adminGetAllUsers');
-            Swal.close();
-            if (!res.success) return;
-
-            const container = document.getElementById('userTableBody');
-            container.innerHTML = res.data.map(u => `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="font-bold text-gray-800">${u.username}</div>
-                        <div class="text-xs text-gray-400">${u.email}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="text-sm text-gray-600">${u.position}</div>
-                        <div class="text-[10px] text-gray-400 font-bold">${u.dept}</div>
-                    </td>
-                    <td class="px-6 py-4 uppercase text-[10px] font-bold">${u.role}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'active' ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'}">
-                            ${u.status === 'active' ? 'ACTIVE' : 'INACTIVE'}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-center">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="editUserByAdmin('${u.email}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
-                            <button onclick="confirmResetPass('${u.email}')" class="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white transition-all"><i class="fas fa-key"></i></button>
-                            <button onclick="confirmDeleteUser('${u.email}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
         }
 
-        async function openUserModal() {
+        async function confirmDelete(targetEmail) {
+            const { value: deleteType } = await Swal.fire({
+                title: 'ยืนยันการลบ',
+                input: 'select',
+                inputOptions: {
+                    'inactive': 'ระงับการใช้งาน (Inactive)',
+                    'purge': 'ลบข้อมูลถาวร (Delete Row)'
+                },
+                inputPlaceholder: 'เลือกรูปแบบการลบ',
+                showCancelButton: true
+            });
+
+            if (deleteType) {
+                loadingStatus(true, "กำลังดำเนินการ...");
+                const res = await callBackend('adminDeleteUser', { targetEmail, deleteType });
+                loadingStatus(false);
+                if (res.success) {
+                    Swal.fire('สำเร็จ', res.message, 'success');
+                    showSection('admin_users');
+                }
+            }
+        }
+
+        async function openAddUserModal() {
             const { value: formValues } = await Swal.fire({
                 title: 'เพิ่มผู้ใช้ใหม่',
                 html:
-                    `<input id="swal-email" class="swal2-input" placeholder="อีเมล">` +
-                    `<input id="swal-name" class="swal2-input" placeholder="ชื่อ-นามสกุล">` +
-                    `<input id="swal-pos" class="swal2-input" placeholder="ตำแหน่ง">` +
-                    `<input id="swal-dept" class="swal2-input" placeholder="หน่วยงาน">` +
-                    `<select id="swal-role" class="swal2-input"><option value="staff">Staff</option><option value="admin">Admin</option></select>`,
+                    '<input id="swal-email" class="swal2-input" placeholder="อีเมล">' +
+                    '<input id="swal-name" class="swal2-input" placeholder="ชื่อ-นามสกุล">' +
+                    '<input id="swal-dept" class="swal2-input" placeholder="หน่วยงาน">' +
+                    '<select id="swal-role" class="swal2-input"><option value="staff">Staff</option><option value="admin">Admin</option></select>',
                 focusConfirm: false,
-                confirmButtonText: 'สร้างบัญชี',
                 preConfirm: () => {
                     return {
                         email: document.getElementById('swal-email').value,
                         username: document.getElementById('swal-name').value,
-                        position: document.getElementById('swal-pos').value,
                         dept: document.getElementById('swal-dept').value,
                         role: document.getElementById('swal-role').value
                     }
@@ -381,111 +289,27 @@
             });
 
             if (formValues) {
-                showLoading();
-                const res = await callAPI('adminCreateUser', formValues);
+                loadingStatus(true, "กำลังบันทึก...");
+                const res = await callBackend('adminCreateUser', formValues);
+                loadingStatus(false);
                 if (res.success) {
                     Swal.fire('สำเร็จ', res.message, 'success');
-                    loadUsers();
+                    showSection('admin_users');
+                } else {
+                    Swal.fire('ล้มเหลว', res.message, 'error');
                 }
             }
         }
 
-        async function editUserByAdmin(email) {
-            showLoading();
-            const res = await callAPI('getUserData', { email });
-            Swal.close();
-            const u = res.data;
-
-            const { value: formValues } = await Swal.fire({
-                title: 'แก้ไขข้อมูลผู้ใช้',
-                html:
-                    `<label class="text-xs">ชื่อ-นามสกุล</label><input id="swal-name" class="swal2-input" value="${u.username}">` +
-                    `<label class="text-xs">ตำแหน่ง</label><input id="swal-pos" class="swal2-input" value="${u.position}">` +
-                    `<label class="text-xs">หน่วยงาน</label><input id="swal-dept" class="swal2-input" value="${u.dept}">` +
-                    `<label class="text-xs">สถานะ</label><select id="swal-status" class="swal2-input"><option value="active" ${u.status === 'active' ? 'selected' : ''}>Active</option><option value="inactive" ${u.status === 'inactive' ? 'selected' : ''}>Inactive</option></select>` +
-                    `<label class="text-xs">สิทธิ์</label><select id="swal-role" class="swal2-input"><option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select>`,
-                confirmButtonText: 'บันทึก',
-                preConfirm: () => ({
-                    email: u.email,
-                    username: document.getElementById('swal-name').value,
-                    position: document.getElementById('swal-pos').value,
-                    dept: document.getElementById('swal-dept').value,
-                    status: document.getElementById('swal-status').value,
-                    role: document.getElementById('swal-role').value
-                })
-            });
-
-            if (formValues) {
-                showLoading();
-                const updateRes = await callAPI('adminUpdateUser', formValues);
-                if (updateRes.success) {
-                    Swal.fire('สำเร็จ', 'ปรับปรุงข้อมูลแล้ว', 'success');
-                    loadUsers();
-                }
-            }
-        }
-
-        async function confirmResetPass(email) {
-            const ask = await Swal.fire({
-                title: 'รีเซ็ตรหัสผ่าน?',
-                text: `ต้องการรีเซ็ตเป็น "1234" ใช่หรือไม่?`,
-                icon: 'warning',
-                showCancelButton: true
-            });
-            if (ask.isConfirmed) {
-                showLoading();
-                const res = await callAPI('adminResetPassword', { email });
-                Swal.fire('เรียบร้อย', res.message, 'success');
-            }
-        }
-
-        async function confirmDeleteUser(email) {
-            const { value: deleteType } = await Swal.fire({
-                title: 'ยืนยันการจัดการข้อมูล',
-                text: `คุณต้องการจัดการกับบัญชี ${email} อย่างไร?`,
-                icon: 'error',
-                showCancelButton: true,
-                confirmButtonText: 'ลบออกจากระบบถาวร',
-                confirmButtonColor: '#d33',
-                denyButtonText: 'ยกเลิกการใช้งาน (Inactive)',
-                denyButtonColor: '#6e7881',
-                showDenyButton: true,
-                cancelButtonText: 'ปิดหน้าต่าง'
-            });
-
-            let type = null;
-            if (Swal.isVisible() && deleteType) { // Hard Delete
-                type = 'purge';
-            } else if (Swal.getDenyButton() && Swal.getDenyButton().contains(event.target) || deleteType === false) { 
-                // เนื่องจาก Swal Deny ให้ผลลัพธ์ต่างกันในแต่ละเวอร์ชั่น ผมจะใช้ Logic ด้านล่าง
-            }
-            
-            // Re-logic for Delete Options
-            const result = await Swal.fire({
-                title: 'เลือกรูปแบบการลบ',
-                icon: 'warning',
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: 'ลบถาวร (Delete Row)',
-                denyButtonText: 'ปิดบัญชี (Inactive)',
-                cancelButtonText: 'ยกเลิก'
-            });
-
-            if (result.isConfirmed) {
-                executeDelete(email, 'purge');
-            } else if (result.isDenied) {
-                executeDelete(email, 'inactive');
-            }
-        }
-
-        async function executeDelete(email, type) {
-            showLoading();
-            const res = await callAPI('adminDeleteUser', { email, type });
-            if (res.success) {
-                Swal.fire('สำเร็จ', 'ดำเนินการเรียบร้อยแล้ว', 'success');
-                loadUsers();
+        function loadingStatus(show, text) {
+            if (show) {
+                Swal.fire({ title: text, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            } else {
+                Swal.close();
             }
         }
     </script>
+</body>
+</html>
 </body>
 </html>
