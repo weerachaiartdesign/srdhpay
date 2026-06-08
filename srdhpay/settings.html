@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ตั้งค่าโปรแกรม - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าโปรแกรม</h1>
+            <p class="text-gray-600 dark:text-gray-400">ตั้งค่าโปรแกรมทะเบียนเบิกจ่ายเงิน รพส.</p>
+        </div>
+
+        <!-- Submenu Tabs -->
+        <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-6 gap-1">
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="fiscal">ปีงบประมาณ</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="money">ประเภทเงิน</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="vendor">เจ้าหนี้/บริษัท</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="checker">ผู้ตรวจ</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="display">การแสดงผล</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="editItems">แก้ไขรายการ</button>
+            <button class="settings-tab px-3 py-2 text-sm font-medium rounded-t-lg" data-tab="backup">Backup & Restore</button>
+        </div>
+
+        <!-- Fiscal Year Tab -->
+        <div id="fiscalTab" class="settings-tab-content card p-6">
+            <h3 class="text-lg font-bold mb-4">กำหนดปีงบประมาณ</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="form-label">ปีงบประมาณ (พ.ศ.)</label><input type="number" id="fiscalYear" class="form-input" step="1" value="2569"></div>
+                <div><label class="form-label">วันที่เริ่มต้นปีงบประมาณ</label><input type="date" id="fiscalStartDate" class="form-input"></div>
+                <div><label class="form-label">วันที่สิ้นสุดปีงบประมาณ</label><input type="date" id="fiscalEndDate" class="form-input"></div>
+                <div><label class="form-label">ช่วงวันที่อนุญาตให้นำเข้า (เริ่ม)</label><input type="date" id="allowImportStart" class="form-input"></div>
+                <div><label class="form-label">ช่วงวันที่อนุญาตให้นำเข้า (สิ้นสุด)</label><input type="date" id="allowImportEnd" class="form-input"></div>
+            </div>
+            <button id="saveFiscalBtn" class="btn-primary mt-4">บันทึก</button>
+        </div>
+
+        <!-- Money Type Tab -->
+        <div id="moneyTab" class="settings-tab-content card p-6 hidden">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">ประเภทเงิน</h3><button id="addMoneyTypeBtn" class="btn-secondary text-sm"><i class="fas fa-plus"></i> เพิ่ม</button></div>
+            <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr><th>ลำดับ</th><th>ประเภทเงิน</th><th>สี</th><th>จัดการ</th></tr></thead><tbody id="moneyTypeTable"></tbody></table></div>
+        </div>
+
+        <!-- Vendor Tab -->
+        <div id="vendorTab" class="settings-tab-content card p-6 hidden">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">รายชื่อเจ้าหนี้/บริษัท</h3><div><input type="text" id="vendorSearch" placeholder="ค้นหา..." class="form-input inline w-48 mr-2"><button id="addVendorBtn" class="btn-secondary text-sm"><i class="fas fa-plus"></i> เพิ่ม</button></div></div>
+            <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr><th>ชื่อเจ้าหนี้/บริษัท</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody id="vendorTable"></tbody></table></div>
+            <div class="mt-2 flex justify-between"><button id="prevVendorPage" class="btn-secondary text-sm">«</button><span id="vendorPageInfo">หน้า 1</span><button id="nextVendorPage" class="btn-secondary text-sm">»</button></div>
+        </div>
+
+        <!-- Checker (ผู้ตรวจ) Tab -->
+        <div id="checkerTab" class="settings-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">รายชื่อผู้ตรวจ (role=editor)</h3>
+            <div class="overflow-x-auto"><table class="data-table w-full"><thead><tr><th>ชื่อ-สกุล</th><th>อีเมล</th><th>หน่วยงาน</th></tr></thead><tbody id="checkerTable"></tbody></table></div>
+        </div>
+
+        <!-- Display Tab -->
+        <div id="displayTab" class="settings-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">กำหนดการแสดงผล</h3>
+            <div><label class="form-label">จำนวนประเภทเงินใน dashboard summary cards</label><input type="number" id="dashboardCardCount" class="form-input w-32" value="5"></div>
+            <div class="mt-3"><label class="form-label">จำนวนหน่วยงานใน dashboard graphs (top X)</label><input type="number" id="dashboardTopDeptCount" class="form-input w-32" value="5"></div>
+            <button id="saveDisplayBtn" class="btn-primary mt-4">บันทึก</button>
+        </div>
+
+        <!-- Edit Items Tab -->
+        <div id="editItemsTab" class="settings-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">แก้ไขข้อมูลรายการ</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4"><input type="text" id="editSearchRequest" placeholder="เลขที่ใบขอเบิก" class="form-input"><input type="text" id="editSearchVendor" placeholder="เจ้าหนี้" class="form-input"><select id="editSearchStatus" class="form-input"><option value="">ทุกสถานะ</option><option value="รอเอกสาร">รอเอกสาร</option><option value="รับเข้าระบบ">รับเข้าระบบ</option><option value="ตรวจสอบ">ตรวจสอบ</option><option value="ส่งแก้ไข">ส่งแก้ไข</option><option value="ตรวจผ่าน">ตรวจผ่าน</option><option value="เสนอ">เสนอ</option><option value="อนุมัติ">อนุมัติ</option><option value="จ่ายแล้ว">จ่ายแล้ว</option><option value="ยกเลิก">ยกเลิก</option></select><button id="searchEditItemsBtn" class="btn-primary">ค้นหา</button></div>
+            <div class="overflow-x-auto"><table class="data-table w-full text-sm"><thead><tr><th>สถานะ</th><th>เลขที่ลงทะเบียน/เลขที่รับ</th><th>เลขที่ใบขอเบิก/ฎีกา</th><th>เจ้าหนี้</th><th>รายการ</th><th>จำนวนเงิน</th><th>หน่วยงาน/ผู้ส่ง</th><th>ยกเลิก</th><th>แก้ไข/ลบ</th></tr></thead><tbody id="editItemsTableBody"><tr><td colspan="9" class="text-center">กรุณาค้นหา</td></tr></tbody></table></div>
+            <div class="flex justify-between mt-4"><button id="prevEditPage" class="btn-secondary text-sm">«</button><span id="editPageInfo">หน้า 1</span><button id="nextEditPage" class="btn-secondary text-sm">»</button></div>
+        </div>
+
+        <!-- Backup & Restore Tab -->
+        <div id="backupTab" class="settings-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">Backup & Restore</h3>
+            <div class="space-y-4"><button id="exportBackupBtn" class="btn-primary"><i class="fas fa-download"></i> Export เป็น CSV/XLSX/JSON</button><div><label class="form-label">Restore: เลือกไฟล์ (CSV/XLSX/JSON)</label><input type="file" id="restoreFile" accept=".csv,.xlsx,.json"><button id="restoreBtn" class="btn-secondary ml-2">อัปโหลดและกู้คืน</button></div><p class="text-sm text-red-600">⚠️ การกู้คืนจะแทนที่ข้อมูลทั้งหมดในทะเบียนเบิกจ่าย</p></div>
+        </div>
+    </main>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/settings.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth(['admin','manager']);
+            if (!authorized) return;
+            initSettingsPage();
+        })();
+    </script>
+</body>
+</html>
