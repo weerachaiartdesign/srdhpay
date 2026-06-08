@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>บันทึกการเสนอและอนุมัติ - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">บันทึกการเสนอและอนุมัติ</h1>
+            <p class="text-gray-600 dark:text-gray-400">บันทึกการเสนอและอนุมัติจ่าย</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 mb-6">
+            <button id="proposeBtn" class="btn-primary" disabled><i class="fas fa-paper-plane mr-2"></i>ส่งเสนอ → บันทึกเสนอ</button>
+            <button id="printProposeBtn" class="btn-secondary"><i class="fas fa-print mr-2"></i>พิมพ์ใบบันทึกเสนอ</button>
+            <button id="approveBtn" class="btn-primary bg-purple-700" disabled><i class="fas fa-check-circle mr-2"></i>อนุมัติ → บันทึกอนุมัติ</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="card p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <select id="filterStatus" class="form-input">
+                    <option value="">ทั้งหมด (สถานะ)</option>
+                    <option value="ตรวจผ่าน">ตรวจผ่าน</option>
+                    <option value="เสนอ">เสนอ</option>
+                </select>
+                <select id="filterMoneyType" class="form-input"><option value="">ประเภทเงิน</option></select>
+                <select id="filterDept" class="form-input"><option value="">หน่วยงาน</option></select>
+                <input type="text" id="filterSender" class="form-input" placeholder="ผู้ส่งเอกสาร">
+                <input type="text" id="filterVendor" class="form-input" placeholder="ชื่อเจ้าหนี้/บริษัท">
+            </div>
+            <div class="flex justify-end mt-3"><button id="resetFilters" class="btn-secondary text-sm">ล้างค่า</button></div>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="desktop-only card overflow-x-auto">
+            <table class="data-table min-w-full">
+                <thead>
+                    <tr><th><input type="checkbox" id="selectAll"></th><th>เลขที่ฎีกา/ประเภทเงิน</th><th>ชื่อเจ้าหนี้/บริษัท</th><th>รายการ</th><th>จำนวนเงินขอเบิก</th><th>หน่วยงาน/ผู้ส่งเอกสาร</th><th>สถานะ</th></tr>
+                </thead>
+                <tbody id="tableBody"><tr><td colspan="7" class="text-center">กำลังโหลด...</td></tr></tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div id="mobileCards" class="mobile-only mobile-card-list"></div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between mt-4"><button id="prevPage" class="btn-secondary" disabled>« ก่อนหน้า</button><span id="pageInfo">หน้า 1</span><button id="nextPage" class="btn-secondary" disabled>ถัดไป »</button></div>
+    </main>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/approve.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth(['admin','manager']);
+            if (!authorized) return;
+            initApprovePage();
+        })();
+    </script>
+</body>
+</html>
