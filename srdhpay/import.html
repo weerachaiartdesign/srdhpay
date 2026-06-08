@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>นำเข้าข้อมูล - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">นำเข้าข้อมูล</h1>
+            <p class="text-gray-600 dark:text-gray-400">ลงทะเบียนรับฎีกาเข้าระบบ</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 mb-6">
+            <button id="addManualBtn" class="btn-primary"><i class="fas fa-plus mr-2"></i>เพิ่มข้อมูลเอง</button>
+            <button id="registerBtn" class="btn-primary bg-purple-700" disabled><i class="fas fa-save mr-2"></i>ลงทะเบียน</button>
+            <button id="printRegisterBtn" class="btn-secondary"><i class="fas fa-print mr-2"></i>พิมพ์ใบลงทะเบียน</button>
+        </div>
+
+        <!-- Import XLSX Area -->
+        <div class="card p-6 mb-6 text-center border-2 border-dashed border-purple-300 dark:border-purple-700">
+            <i class="fas fa-cloud-upload-alt text-4xl text-purple-500 mb-3"></i>
+            <p class="text-gray-600 dark:text-gray-400">ลากไฟล์ .xlsx มาวาง หรือ <label class="text-purple-600 cursor-pointer underline">คลิกเพื่อเลือกไฟล์</label> (รองรับสูงสุด 5MB)</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" class="hidden">
+            <div id="fileNameDisplay" class="text-sm text-gray-500 mt-2"></div>
+        </div>
+
+        <!-- Preview Table (Desktop) -->
+        <div class="desktop-only card overflow-x-auto">
+            <h3 class="font-semibold p-3 border-b">รายการที่เตรียมลงทะเบียน</h3>
+            <table class="data-table min-w-full">
+                <thead>
+                    <tr><th>เลขที่ใบขอเบิก</th><th>เลขที่ฎีกา</th><th>ชื่อเจ้าหนี้</th><th>จำนวนเงิน</th><th>รายการ</th><th>ประเภทเงิน</th><th>การจัดการ</th></tr>
+                </thead>
+                <tbody id="previewTableBody"><tr><td colspan="7" class="text-center">ยังไม่มีรายการ</td></tr></tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Preview -->
+        <div id="mobilePreview" class="mobile-only mobile-card-list"></div>
+    </main>
+
+    <!-- Modal: Add/Edit Item Form -->
+    <div id="itemModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4" id="modalTitle">เพิ่มรายการ</h3>
+                <form id="itemForm" class="space-y-3">
+                    <input type="hidden" id="editIndex">
+                    <div><label class="form-label">หน่วยงาน</label><input type="text" id="dept" class="form-input" required></div>
+                    <div><label class="form-label">ผู้ส่งเอกสาร</label><input type="text" id="sender" class="form-input" required></div>
+                    <div><label class="form-label">ประเภทเงิน</label><select id="moneyType" class="form-input" required></select></div>
+                    <div><label class="form-label">เลขที่ใบขอเบิก (1/69)</label><input type="text" id="requestNo" class="form-input" required placeholder="1/69"></div>
+                    <div><label class="form-label">เลขที่ฎีกา (1801/69)</label><input type="text" id="dkNo" class="form-input" placeholder="ถ้ามี"></div>
+                    <div><label class="form-label">เลขที่ใบกัน</label><input type="text" id="reserveNo" class="form-input"></div>
+                    <div><label class="form-label">จำนวนเงินกัน</label><input type="number" id="reserveAmount" class="form-input" step="0.01"></div>
+                    <div><label class="form-label">เลขที่โครงการ (e-GP)</label><input type="text" id="egpNo" class="form-input"></div>
+                    <div><label class="form-label">Invoice</label><input type="text" id="invoice" class="form-input"></div>
+                    <div><label class="form-label">ชื่อเจ้าหนี้/บริษัท</label><input type="text" id="vendor" class="form-input" required list="vendorList"><datalist id="vendorList"></datalist></div>
+                    <div><label class="form-label">จำนวนเงินขอเบิก</label><input type="number" id="amount" class="form-input" step="0.01" required></div>
+                    <div><label class="form-label">รายการ</label><textarea id="description" class="form-input" rows="2"></textarea></div>
+                    <div class="flex gap-3 pt-2"><button type="submit" class="btn-primary">บันทึก</button><button type="button" id="closeModalBtn" class="btn-secondary">ยกเลิก</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/import.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth(['admin','manager','staff']);
+            if (!authorized) return;
+            initImportPage();
+        })();
+    </script>
+</body>
+</html>
