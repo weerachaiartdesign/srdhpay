@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Dashboard - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+            <p class="text-gray-600 dark:text-gray-400">ภาพรวมการเบิกจ่ายเงิน ปีงบประมาณ <span id="fiscalYear">2569</span></p>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div id="summaryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+            <!-- dynamic -->
+        </div>
+        
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="card p-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">ระยะเวลาดำเนินการเฉลี่ย</h3>
+                <p class="text-3xl font-bold text-purple-600" id="avgDays">- วัน</p>
+                <p class="text-sm text-gray-500">(รับเรื่อง - อนุมัติ)</p>
+            </div>
+            <div class="card p-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-2">ความคืบหน้า</h3>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                    <div id="progressBar" class="bg-purple-600 h-4 rounded-full" style="width: 0%"></div>
+                </div>
+                <p id="progressText" class="text-sm text-gray-600 dark:text-gray-400">0%</p>
+            </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="card p-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-4">สถิติการเบิกจ่ายแยกตามหน่วยงาน</h3>
+                <canvas id="deptChart" height="250"></canvas>
+            </div>
+            <div class="card p-4">
+                <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-4">สถิติประเภทการเบิกจ่ายแยกหน่วยงาน</h3>
+                <canvas id="stackedChart" height="250"></canvas>
+            </div>
+        </div>
+        
+        <div class="card p-4">
+            <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-4">เปรียบเทียบจำนวนฎีกาแต่ละเดือน</h3>
+            <canvas id="monthlyChart" height="300"></canvas>
+        </div>
+    </main>
+    
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth();
+            if (!authorized) return;
+            loadDashboard();
+        })();
+    </script>
+</body>
+</html>
