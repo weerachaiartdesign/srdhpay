@@ -3,7 +3,7 @@
 
 // ==================== Configuration ====================
 // 🔧 แก้ไข URL นี้เป็น URL ของ GAS Web App ที่ deploy จริง
-const GAS_BASE_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+const GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbxRsOwPZhsUdolY7_c9ye2TKWJjXBz2Q1W73Hln34PuONm04m5jKGa9NiC5jMklSaWd/exec';
 
 // Environment detection (สำหรับ debugging)
 const IS_DEVELOPMENT = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
