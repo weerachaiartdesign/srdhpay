@@ -6,7 +6,7 @@
     "enabled": true
   },
   "assets": {
-    "directory": "srdhcheck"
+    "directory": "srdhpay"
   },
   "compatibility_flags": [
     "nodejs_compat"
