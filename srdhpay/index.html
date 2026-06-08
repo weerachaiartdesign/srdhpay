@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SRDH PAY - ระบบทะเบียนเบิกจ่ายเงิน</title>
+    <!-- Tailwind CSS CDN + Fonts + Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- API Config -->
+    <script src="api-config.js"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-900 dark:to-gray-800 font-sans transition-colors duration-300">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
+            <!-- Header with Logo -->
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-6 text-center">
+                <div class="flex justify-center mb-3">
+                    <img src="icons/logo_srdhpay-630.png" alt="SRDH PAY Logo" class="h-16 w-auto rounded-lg shadow-md" onerror="this.src='https://placehold.co/80x80?text=SRDH'">
+                </div>
+                <h1 class="text-2xl font-bold text-white">SRDH PAY</h1>
+                <p class="text-purple-100 text-sm mt-1">ระบบทะเบียนเบิกจ่ายเงิน</p>
+                <p class="text-purple-200 text-xs">โรงพยาบาลสิรินธร</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div class="p-6">
+                <form id="loginForm" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล</label>
+                        <div class="relative">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="email" name="email" id="email" required 
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   placeholder="your@email.com">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสผ่าน</label>
+                        <div class="relative">
+                            <i class="fas fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="password" name="password" id="password" required
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                   placeholder="••••••••">
+                        </div>
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-2 rounded-lg transition duration-200 shadow-md">
+                        <i class="fas fa-sign-in-alt mr-2"></i> เข้าสู่ระบบ
+                    </button>
+                </form>
+                
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white dark:bg-gray-800 text-gray-500">หรือ</span>
+                    </div>
+                </div>
+                
+                <button id="guestBtn" 
+                        class="w-full border border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30 font-semibold py-2 rounded-lg transition duration-200">
+                    <i class="fas fa-user-friends mr-2"></i> เข้าใช้งานแบบผู้เยี่ยมชม
+                </button>
+            </div>
+            
+            <!-- Footer -->
+            <div class="bg-gray-50 dark:bg-gray-900/50 px-6 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
+                SRDH PAY Version 1.0.0
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // เริ่มต้นเมื่อโหลดหน้า
+        document.addEventListener('DOMContentLoaded', function() {
+            // ตรวจสอบว่าเคย login แล้วหรือไม่ (มี token)
+            const token = localStorage.getItem('srdhpay_token');
+            if (token) {
+                // ตรวจสอบ token กับ backend
+                validateTokenAndRedirect(token);
+            }
+            
+            // Login form handler
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    Swal.fire('กรุณากรอกข้อมูล', 'อีเมลและรหัสผ่านจำเป็นต้องกรอก', 'warning');
+                    return;
+                }
+                
+                // แสดง loading
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังเข้าสู่ระบบ...';
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'login',
+                            email: email,
+                            password: password
+                        })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // บันทึก session
+                        localStorage.setItem('srdhpay_token', result.token);
+                        localStorage.setItem('srdhpay_user', JSON.stringify({
+                            email: result.email,
+                            username: result.username,
+                            role: result.role
+                        }));
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ยินดีต้อนรับ',
+                            text: `คุณ ${result.username} เข้าสู่ระบบ`,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = 'dashboard.html';
+                        });
+                    } else {
+                        Swal.fire('เข้าสู่ระบบล้มเหลว', result.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับระบบ กรุณาลองใหม่อีกครั้ง', 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+            
+            // Guest button handler
+            document.getElementById('guestBtn').addEventListener('click', async function() {
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ...';
+                btn.disabled = true;
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'guest' })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        localStorage.setItem('srdhpay_token', result.token);
+                        localStorage.setItem('srdhpay_user', JSON.stringify({
+                            email: result.email,
+                            username: result.username,
+                            role: result.role,
+                            is_guest: true
+                        }));
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'ยินดีต้อนรับ',
+                            text: 'คุณเข้าสู่ระบบแบบผู้เยี่ยมชม (อ่านอย่างเดียว)',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = 'dashboard.html';
+                        });
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเข้าใช้งานแบบผู้เยี่ยมชมได้', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับระบบ', 'error');
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        });
+        
+        async function validateTokenAndRedirect(token) {
+            try {
+                const response = await fetch(`${API_BASE_URL}?path=validate&token=${encodeURIComponent(token)}`);
+                const result = await response.json();
+                if (result.success && result.session) {
+                    // token ยังใช้ได้
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // token หมดอายุ ลบของเก่า
+                    localStorage.removeItem('srdhpay_token');
+                    localStorage.removeItem('srdhpay_user');
+                }
+            } catch (err) {
+                // ไม่สามารถตรวจสอบได้ ให้อยู่หน้า login ต่อไป
+            }
+        }
+    </script>
+</body>
+</html>
