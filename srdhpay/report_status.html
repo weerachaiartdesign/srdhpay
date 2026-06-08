@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>รายงานสถานะฎีกา - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">รายงานสถานะฎีกา</h1>
+        </div>
+        <div class="flex flex-wrap gap-3 mb-6">
+            <button id="btnReceived" class="btn-primary">ฎีการับเข้าระบบ</button>
+            <button id="btnEditing" class="btn-primary">ฎีกาส่งแก้ไข</button>
+            <button id="btnProposed" class="btn-primary">รออนุมัติ</button>
+            <button id="printStatusBtn" class="btn-secondary"><i class="fas fa-print mr-2"></i>พิมพ์</button>
+        </div>
+        <div class="card p-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="form-label">วันที่เริ่มต้น</label><input type="date" id="dateFrom" class="form-input"></div>
+                <div><label class="form-label">วันที่สิ้นสุด</label><input type="date" id="dateTo" class="form-input"></div>
+            </div>
+        </div>
+        <div class="desktop-only card overflow-x-auto">
+            <table class="data-table min-w-full">
+                <thead><tr><th>วันที่รับเข้า</th><th>เลขที่ใบขอเบิก</th><th>เลขที่ฎีกา</th><th>ชื่อเจ้าหนี้</th><th>รายการ</th><th>จำนวนเงิน</th><th>หน่วยงาน</th><th>ผู้ส่งเอกสาร</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="8" class="text-center">เลือกปุ่มเพื่อแสดงข้อมูล</td></tr></tbody>
+            </table>
+        </div>
+        <div id="mobileCards" class="mobile-only mobile-card-list"></div>
+    </main>
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/report.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth(['admin','manager']);
+            if (!authorized) return;
+            initStatusReport();
+        })();
+    </script>
+</body>
+</html>
