@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ตั้งค่าผู้ใช้งาน - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าผู้ใช้งาน</h1>
+            <p class="text-gray-600 dark:text-gray-400">จัดการข้อมูลผู้ใช้งาน</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+            <button id="tabProfile" class="px-4 py-2 font-medium text-purple-600 border-b-2 border-purple-600">ข้อมูลส่วนตัว</button>
+            <button id="tabUsers" class="px-4 py-2 font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400">จัดการผู้ใช้</button>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profileSection" class="card p-6 max-w-lg">
+            <form id="profileForm" class="space-y-4">
+                <div><label class="form-label">อีเมล</label><input type="email" id="profileEmail" class="form-input" disabled></div>
+                <div><label class="form-label">รหัสผ่าน</label><input type="password" id="profilePassword" class="form-input" placeholder="********"><button type="button" id="changePwdBtn" class="text-sm text-purple-600 mt-1">เปลี่ยนรหัสผ่าน</button></div>
+                <div><label class="form-label">ชื่อ-สกุล</label><input type="text" id="profileName" class="form-input" required></div>
+                <div><label class="form-label">ตำแหน่ง</label><input type="text" id="profilePosition" class="form-input"></div>
+                <div><label class="form-label">หน่วยงาน</label><input type="text" id="profileDept" class="form-input" disabled></div>
+                <div><label class="form-label">สิทธิ์</label><input type="text" id="profileRole" class="form-input" disabled></div>
+                <button type="submit" class="btn-primary">บันทึกข้อมูล</button>
+            </form>
+        </div>
+
+        <!-- Users Management Section (hidden initially) -->
+        <div id="usersSection" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div><span id="userStats" class="text-sm text-gray-500"></span></div>
+                <button id="addUserBtn" class="btn-primary"><i class="fas fa-plus mr-2"></i>เพิ่มผู้ใช้ใหม่</button>
+            </div>
+            <div class="card overflow-x-auto">
+                <table class="data-table min-w-full">
+                    <thead><tr><th>อีเมล</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>สถานะ</th><th>การจัดการ</th></tr></thead>
+                    <tbody id="userTableBody"><tr><td colspan="5" class="text-center">กำลังโหลด...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Add/Edit User -->
+    <div id="userModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h3 class="text-xl font-bold mb-4" id="userModalTitle">เพิ่มผู้ใช้ใหม่</h3>
+            <form id="userForm" class="space-y-3">
+                <input type="hidden" id="userEmailOriginal">
+                <div><label class="form-label">อีเมล</label><input type="email" id="userEmail" class="form-input" required></div>
+                <div><label class="form-label">รหัสผ่าน</label><input type="password" id="userPassword" class="form-input" placeholder="เว้นว่างใช้ค่าตั้งต้น"></div>
+                <div><label class="form-label">ชื่อ-สกุล</label><input type="text" id="userName" class="form-input" required></div>
+                <div><label class="form-label">ตำแหน่ง</label><input type="text" id="userPosition" class="form-input"></div>
+                <div><label class="form-label">หน่วยงาน</label><input type="text" id="userDept" class="form-input" list="deptList"></div>
+                <div><label class="form-label">สิทธิ์</label><select id="userRole" class="form-input"><option value="staff">staff</option><option value="editor">editor</option><option value="checker">checker</option><option value="manager">manager</option><option value="admin">admin</option></select></div>
+                <div><label class="form-label">สถานะ</label><select id="userActive" class="form-input"><option value="active">ใช้งาน</option><option value="inactive">ปิดใช้งาน</option></select></div>
+                <div class="flex gap-3"><button type="submit" class="btn-primary">บันทึก</button><button type="button" id="closeUserModal" class="btn-secondary">ยกเลิก</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Change Password -->
+    <div id="changePwdModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h3 class="text-xl font-bold mb-4">เปลี่ยนรหัสผ่าน</h3>
+            <form id="changePwdForm" class="space-y-3">
+                <div><label class="form-label">รหัสผ่านปัจจุบัน</label><input type="password" id="oldPassword" class="form-input" required></div>
+                <div><label class="form-label">รหัสผ่านใหม่</label><input type="password" id="newPassword" class="form-input" required></div>
+                <div><label class="form-label">ยืนยันรหัสผ่านใหม่</label><input type="password" id="confirmPassword" class="form-input" required></div>
+                <div class="flex gap-3"><button type="submit" class="btn-primary">เปลี่ยนรหัสผ่าน</button><button type="button" id="closePwdModal" class="btn-secondary">ยกเลิก</button></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/auth-page.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth();
+            if (!authorized) return;
+            initAuthPage();
+        })();
+    </script>
+</body>
+</html>
