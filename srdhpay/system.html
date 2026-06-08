@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ตั้งค่าระบบ - SRDH PAY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="icons/srdhpay-192.png">
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <div id="sidebar-container"></div>
+    <div id="header-container"></div>
+    <main class="p-4 md:p-6 transition-all duration-300" id="main-content">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าระบบ</h1>
+            <p class="text-gray-600 dark:text-gray-400">System Management</p>
+        </div>
+
+        <!-- Submenu Tabs -->
+        <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-6 gap-2">
+            <button class="system-tab px-4 py-2 rounded-t-lg" data-tab="permission">Permission Matrix</button>
+            <button class="system-tab px-4 py-2 rounded-t-lg" data-tab="session">Session Settings</button>
+            <button class="system-tab px-4 py-2 rounded-t-lg" data-tab="audit">Audit Logs</button>
+            <button class="system-tab px-4 py-2 rounded-t-lg" data-tab="telegram">Telegram Notification</button>
+            <button class="system-tab px-4 py-2 rounded-t-lg" data-tab="retention">Data Retention</button>
+        </div>
+
+        <!-- Permission Matrix Tab -->
+        <div id="permissionTab" class="system-tab-content card p-6">
+            <h3 class="text-lg font-bold mb-4">สิทธิ์การเข้าถึง (Permission Matrix)</h3>
+            <div class="overflow-x-auto">
+                <table class="data-table w-full">
+                    <thead><tr><th>Module</th><th>Admin</th><th>Manager</th><th>Editor</th><th>Checker</th><th>Staff</th><th>Guest</th></tr></thead>
+                    <tbody id="permissionTableBody"></tbody>
+                </table>
+            </div>
+            <button id="savePermissionBtn" class="btn-primary mt-4">บันทึกการเปลี่ยนแปลง</button>
+        </div>
+
+        <!-- Session Settings Tab -->
+        <div id="sessionTab" class="system-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">Session Settings</h3>
+            <div class="space-y-3">
+                <div><label class="form-label">Guest Timeout (Hours)</label><input type="number" id="guestTimeout" class="form-input w-40" step="1" value="2"></div>
+                <div><label class="form-label">Inactivity Logout (Minutes)</label><input type="number" id="inactivityTimeout" class="form-input w-40" step="1" value="30"></div>
+                <div><label class="form-label">Token Age (Hours)</label><input type="number" id="tokenAge" class="form-input w-40" step="1" value="12"></div>
+                <div><label class="form-label">Max Login Retry</label><input type="number" id="maxLoginRetry" class="form-input w-40" step="1" value="5"></div>
+                <button id="saveSessionBtn" class="btn-primary">บันทึก</button>
+            </div>
+        </div>
+
+        <!-- Audit Logs Tab -->
+        <div id="auditTab" class="system-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">Audit Logs</h3>
+            <div class="flex justify-between mb-4"><button id="exportAuditBtn" class="btn-secondary">Export Logs (CSV)</button><button id="refreshAuditBtn" class="btn-secondary">รีเฟรช</button></div>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto"><table class="data-table w-full"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="auditTableBody"><tr><td colspan="4" class="text-center">กำลังโหลด...</td></tr></tbody></table></div>
+        </div>
+
+        <!-- Telegram Notification Tab -->
+        <div id="telegramTab" class="system-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">Telegram Notification</h3>
+            <div class="space-y-3">
+                <div><label class="form-label">Bot Token</label><input type="text" id="telegramToken" class="form-input w-full"></div>
+                <div><label class="form-label">Chat ID</label><input type="text" id="telegramChatId" class="form-input w-full"></div>
+                <div><label class="form-label">เปิดใช้งานการแจ้งเตือน</label><input type="checkbox" id="telegramEnabled"> เปิด</div>
+                <div><label class="form-label">เหตุการณ์ที่ต้องการแจ้งเตือน</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <label><input type="checkbox" class="telegram-event" value="import"> import สำเร็จ</label>
+                        <label><input type="checkbox" class="telegram-event" value="receive"> receive สำเร็จ</label>
+                        <label><input type="checkbox" class="telegram-event" value="assign_editor"> assign editor</label>
+                        <label><input type="checkbox" class="telegram-event" value="edit"> edit</label>
+                        <label><input type="checkbox" class="telegram-event" value="return"> return</label>
+                        <label><input type="checkbox" class="telegram-event" value="pass"> pass</label>
+                        <label><input type="checkbox" class="telegram-event" value="propose"> propose</label>
+                        <label><input type="checkbox" class="telegram-event" value="approve"> approve</label>
+                        <label><input type="checkbox" class="telegram-event" value="pay"> pay</label>
+                        <label><input type="checkbox" class="telegram-event" value="cancel"> cancel</label>
+                    </div>
+                </div>
+                <button id="testTelegramBtn" class="btn-secondary">ทดสอบส่งข้อความ</button>
+                <button id="saveTelegramBtn" class="btn-primary">บันทึก</button>
+            </div>
+        </div>
+
+        <!-- Data Retention Tab -->
+        <div id="retentionTab" class="system-tab-content card p-6 hidden">
+            <h3 class="text-lg font-bold mb-4">Data Retention</h3>
+            <div class="space-y-3">
+                <div><label class="form-label">เปิดการทำงาน Data Retention</label><input type="checkbox" id="retentionEnabled"></div>
+                <div><label class="form-label">เก็บข้อมูลล่าสุดกี่ปี</label><input type="number" id="retentionYears" class="form-input w-40" step="1" value="3"></div>
+                <button id="runRetentionBtn" class="btn-primary">ลบข้อมูลเก่าตอนนี้</button>
+                <p class="text-sm text-gray-500 mt-2">⚠️ ระบบจะทำการสำรองข้อมูลอัตโนมัติก่อนลบ</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/system.js"></script>
+    <script>
+        (async function() {
+            const authorized = await requireAuth(['admin']);
+            if (!authorized) return;
+            initSystemPage();
+        })();
+    </script>
+</body>
+</html>
