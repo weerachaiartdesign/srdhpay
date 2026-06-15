@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* โทนสีม่วงพาสเทล - โหมดปกติ */
+  --color-primary: #7C3AED;
+  --color-primary-hover: #6D28D9;
+  --color-primary-light: #EDE9FE;
+  --color-secondary: #A78BFA;
+  
+  --bg-main: #F9FAFB;
+  --bg-card: #FFFFFF;
+  
+  --text-main: #1F2937;
+  --text-muted: #6B7280;
+  
+  --border-color: #E5E7EB;
+  
+  /* ฟอนต์ */
+  --font-thai: 'Sarabun', sans-serif;
+  --font-eng: 'Inter', sans-serif;
+}
+
+/* ตั้งค่า Dark Mode สมัยใหม่ (ควบคุมด้วย class .dark บน <html>) */
+html.dark {
+  --color-primary: #8B5CF6;
+  --color-primary-hover: #7C3AED;
+  --color-primary-light: #4C1D95; /* ม่วงเข้มเป็นพื้นหลังรอง */
+  
+  --bg-main: #111827;
+  --bg-card: #1F2937;
+  
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  
+  --border-color: #374151;
+}
+
+body {
+  font-family: var(--font-thai);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ผสมผสานฟอนต์ (ตัวเลขใช้อังกฤษ, ตัวอักษรใช้ไทย) */
+.font-number {
+  font-family: var(--font-eng);
+}
+
+/* Card Hover Effect */
+.srdh-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem; /* โค้งมนละมุนๆ */
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.srdh-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* การพิมพ์ */
+@media print {
+  body { background: white !important; color: black !important; }
+  .no-print { display: none !important; }
+  @page { size: A4; margin: 15mm; }
+}

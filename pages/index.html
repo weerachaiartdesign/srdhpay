@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="th" class="light"> <!-- ค่าเริ่มต้นเป็น light, toggle ด้วย JS -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ | SRDH Pay</title>
+    <!-- Tailwind CSS (CDN ชั่วคราว แนะนำโหลดแบบรวมเมื่อขึ้น Production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // ตั้งค่า Tailwind ผสมกับ CSS Variables ของเรา
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { primary: 'var(--color-primary)' }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <!-- SweetAlert2 & Toastify -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+
+    <!-- พื้นหลังตกแต่ง (Blobs) สไตล์ Pastel -->
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-10 animate-blob"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 dark:opacity-10 animate-blob animation-delay-2000"></div>
+
+    <!-- กล่องหลัก -->
+    <div class="w-full max-w-md p-8 z-10 srdh-card">
+        <!-- โลโก้ และ หัวข้อ -->
+        <div class="flex flex-col items-center mb-8">
+            <img src="https://raw.githubusercontent.com/weerachaiartdesign/srdhpay/main/srdhpay/icons/logo_srdhpay-630.png" 
+                 alt="SRDH Pay Logo" 
+                 class="w-24 h-24 mb-4 object-contain shadow-sm rounded-2xl bg-white p-2">
+            <h1 class="text-3xl font-bold text-center text-[var(--color-primary)] tracking-tight">SRDH PAY</h1>
+            <p class="text-sm text-center text-[var(--text-muted)] mt-1">ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร</p>
+        </div>
+
+        <!-- ฟอร์มเข้าสู่ระบบ -->
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label for="email" class="block text-sm font-medium mb-1">อีเมลผู้ใช้งาน</label>
+                <input type="email" id="email" required placeholder="name@srdh.go.th"
+                       class="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-main)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all form-input">
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">รหัสผ่าน</label>
+                <input type="password" id="password" required placeholder="••••••••"
+                       class="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-main)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all form-input">
+            </div>
+
+            <button type="submit" 
+                    class="w-full py-2.5 px-4 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-lg font-medium shadow transition-colors flex justify-center items-center gap-2">
+                <!-- Icon Heroicons (Solid: arrow-right-on-rectangle) -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                  <path fill-rule="evenodd" d="M7.5 3.75A1.5 1.5 0 006 5.25v13.5a1.5 1.5 0 001.5 1.5h6a1.5 1.5 0 001.5-1.5V15a.75.75 0 011.5 0v3.75a3 3 0 01-3 3h-6a3 3 0 01-3-3V5.25a3 3 0 013-3h6a3 3 0 013 3V9A.75.75 0 0115 9V5.25a1.5 1.5 0 00-1.5-1.5h-6zm10.72 4.72a.75.75 0 011.06 0l3 3a.75.75 0 010 1.06l-3 3a.75.75 0 11-1.06-1.06l1.72-1.72H9a.75.75 0 010-1.5h10.94l-1.72-1.72a.75.75 0 010-1.06z" clip-rule="evenodd" />
+                </svg>
+                เข้าสู่ระบบ
+            </button>
+        </form>
+
+        <div class="relative flex py-5 items-center">
+            <div class="flex-grow border-t border-[var(--border-color)]"></div>
+            <span class="flex-shrink-0 mx-4 text-[var(--text-muted)] text-xs">หรือ</span>
+            <div class="flex-grow border-t border-[var(--border-color)]"></div>
+        </div>
+
+        <!-- ปุ่ม Guest -->
+        <button id="guestBtn" 
+                class="w-full py-2.5 px-4 bg-transparent border-2 border-[var(--color-primary-light)] text-[var(--color-primary)] hover:bg-[var(--color-primary-light)] rounded-lg font-medium transition-colors">
+            เข้าใช้งานแบบผู้เยี่ยมชม
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-8 text-xs text-[var(--text-muted)] flex flex-col items-center gap-1">
+        <p>SRDH PAY &copy; 2026</p>
+        <p class="font-number font-medium">Version: 1.0.0</p>
+    </footer>
+
+    <!-- Script สำหรับหน้า Login (Simulation + โครงสร้าง API) -->
+    <script>
+        // ตรวจสอบ Dark Mode เบื้องต้นจาก LocalStorage (ตามข้อ Q7.2)
+        if(localStorage.getItem('srdh_theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // TODO: เรียก API ไปยัง Cloudflare Worker /api/login
+            // ทดสอบ UI 
+            Toastify({
+                text: "กำลังตรวจสอบ...",
+                duration: 2000,
+                style: { background: "var(--color-secondary)" }
+            }).showToast();
+
+            // จำลองดีเลย์
+            setTimeout(() => {
+                if(email === 'admin@srdh.go.th') {
+                    Swal.fire({
+                        title: 'สำเร็จ!',
+                        text: 'ยินดีต้อนรับ คุณผู้ดูแลระบบ เข้าสู่ระบบ',
+                        icon: 'success',
+                        confirmButtonColor: 'var(--color-primary)'
+                    }).then(() => {
+                        window.location.href = 'dashboard.html';
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'เข้าสู่ระบบล้มเหลว',
+                        text: 'ข้อมูลเข้าสู่ระบบไม่ถูกต้อง',
+                        icon: 'error',
+                        confirmButtonColor: 'var(--color-primary)'
+                    });
+                }
+            }, 1000);
+        });
+
+        // Guest Access 
+        document.getElementById('guestBtn').addEventListener('click', () => {
+             // สุ่ม Guest ID
+             const randString = Math.random().toString(36).substring(2, 8).toUpperCase();
+             const guestId = `G-${randString}`;
+             
+             // เก็บ LocalStorage (สำหรับ Client) และ Worker จะสร้าง Session จริง
+             localStorage.setItem('srdh_guest', guestId);
+
+             Swal.fire({
+                title: 'โหมดผู้เยี่ยมชม',
+                text: `ยินดีต้อนรับ Guest (${guestId}) สิทธิ์การมองเห็นแบบอ่านเท่านั้น`,
+                icon: 'info',
+                confirmButtonColor: 'var(--color-primary)'
+             }).then(() => {
+                window.location.href = 'dashboard.html';
+             });
+        });
+    </script>
+</body>
+</html>
