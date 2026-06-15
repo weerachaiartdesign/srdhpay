@@ -183,7 +183,7 @@
                     showToast(data.message || 'เข้าสู่ระบบสำเร็จ!', 'success');
                     Swal.fire({
                         title: 'เข้าสู่ระบบสำเร็จ!',
-                        text: `ยินดีต้อนรับ ${data.username}`,
+                        text: `ยินดีต้อนรับ ${data.user.username}`,
                         icon: 'success',
                         confirmButtonColor: 'var(--color-primary)'
                     }).then(() => {
