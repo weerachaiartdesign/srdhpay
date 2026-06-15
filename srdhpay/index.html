@@ -154,8 +154,16 @@
             // TODO: เรียก API ไปยัง Cloudflare Worker /api/login
             // ในตอนนี้ เราจะจำลองการทำงานของ API ก่อน
             try {
-                const response = await fetch('https://srdhpay-api.weerachaiartdesign.workers.dev/
-', {
+                const response = await fetch('https://srdhpay-api.weerachaiartdesign.workers.dev/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
