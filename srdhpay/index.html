@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="th" class="light">
-<!doctype html>
-<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,15 +27,11 @@
         }
     </script>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SRDH PAY</title>
-  <link rel="stylesheet" href="./style.css" />
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
 
@@ -99,7 +93,6 @@
 
         function showToast(message, type = 'success', duration = 3000) {
             let backgroundColor = '#6B7280';
-
             if (type === 'success') backgroundColor = 'var(--color-primary)';
             if (type === 'error') backgroundColor = '#EF4444';
             if (type === 'info') backgroundColor = 'var(--color-secondary)';
@@ -148,19 +141,17 @@
             }
         }
 
-        function saveUserSession(user) {
+        function saveUserSession(user, token) {
             localStorage.setItem('srdh_user', JSON.stringify(user));
+            if (token) localStorage.setItem('srdh_token', token);
         }
 
         async function login(email, password) {
             const response = await fetch(`${API_BASE}/api/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
-
             const data = await response.json();
             return { response, data };
         }
@@ -168,11 +159,8 @@
         async function guestLogin() {
             const response = await fetch(`${API_BASE}/api/guest-login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
-
             const data = await response.json();
             return { response, data };
         }
@@ -182,11 +170,8 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-
-            const email = emailInput.value.trim();
-            const password = passwordInput.value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
 
             if (!email || !password) {
                 Swal.fire({
@@ -215,7 +200,7 @@
                     return;
                 }
 
-                saveUserSession(data.user);
+                saveUserSession(data.user, data.token);
                 showToast(data.message || 'เข้าสู่ระบบสำเร็จ', 'success');
 
                 Swal.fire({
@@ -258,7 +243,7 @@
                     return;
                 }
 
-                saveUserSession(data.user);
+                saveUserSession(data.user, data.token);
                 showToast(data.message || 'เข้าสู่ระบบ Guest สำเร็จ', 'success');
 
                 Swal.fire({
@@ -282,19 +267,5 @@
             }
         });
     </script>
-<body>
-  <div class="app">
-    <header class="topbar">
-      <h1>SRDH PAY</h1>
-      <p>ระบบรับ-ลงทะเบียนเอกสาร</p>
-    </header>
-
-    <main id="app"></main>
-  </div>
-
-  <script>
-    const API_BASE = 'https://srdhpay-api.weerachaiartdesign.workers.dev';
-  </script>
-  <script src="./app.js"></script>
 </body>
 </html>
