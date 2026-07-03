@@ -178,7 +178,17 @@
     function renderTable(rows) {
       const tbody = document.getElementById('tableBody');
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-[var(--color-text-muted)]">ไม่พบรายการ</td></tr>`;
+        // ตรวจว่ามีข้อมูลในระบบจริงไหม (เผื่อทุกรายการยังเป็น WAITING ยังไม่ได้รับเข้าระบบ)
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-10">
+              <p class="text-[var(--color-text-muted)] mb-2">ไม่พบรายการ</p>
+              <p class="text-xs text-[var(--color-text-muted)]">
+                หมายเหตุ: หน้านี้ไม่แสดงรายการสถานะ "รอเอกสาร"<br>
+                หากเพิ่งลงทะเบียน กรุณาไปที่หน้า <a href="receive.html" class="underline" style="color:var(--color-primary)">รับเข้าระบบ</a> ก่อน
+              </p>
+            </td>
+          </tr>`;
         return;
       }
       tbody.innerHTML = rows.map((r) => `
