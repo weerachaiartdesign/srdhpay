@@ -118,12 +118,15 @@
         depts = dRes.data.filter((d) => d.active);
 
         // ดึง limit ตาม role จาก settings_app
-        const limRes = await api.get('/api/settings/display').catch(() => null);
-        if (currentUser.role === 'staff') {
-          importLimit = parseInt(limRes?.staff_import_limit || 20, 10);
-        } else {
-          importLimit = parseInt(limRes?.admin_import_limit || 100, 10);
-        }
+      // ดึง limit ตาม role จาก settings_app (endpoint /api/settings/fiscal-year คืนค่า settings ทั้งหมด)
+      try {
+        const fyRes = await api.get('/api/settings/fiscal-year');
+        const d = fyRes.data || {};
+        importLimit = parseInt(
+          currentUser.role === 'staff' ? (d.import_limit_staff || 20) : (d.import_limit_admin || 100),
+          10
+        );
+      } catch { importLimit = currentUser.role === 'staff' ? 20 : 100; }
       } catch (err) { App.errorAlert(err); }
 
       bindEvents();
