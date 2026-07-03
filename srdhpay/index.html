@@ -122,8 +122,9 @@
       try {
         const res = await api.post('/api/auth/guest');
         App.setSession(res.token, { ...res.user, isGuest: true });
+        const guestDisplayId = res.user?.email || 'Guest';
         await Swal.fire({
-          icon: 'info', title: `ยินดีต้อนรับ Guest (${res.guestId})`,
+          icon: 'info', title: `ยินดีต้อนรับ (${guestDisplayId})`,
           text: 'เข้าสู่ระบบแบบผู้เยี่ยมชม (ดูข้อมูลได้อย่างเดียว)',
           timer: 1800, showConfirmButton: false
         });
