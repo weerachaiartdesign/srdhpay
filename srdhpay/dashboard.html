@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - SRDH PAY</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="header-placeholder"></div>
+  <div class="flex">
+    <div id="sidebar-placeholder"></div>
+
+    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-6">
+      <div>
+        <h2 class="font-display font-bold text-xl">Dashboard</h2>
+        <p id="subTitle" class="text-sm text-[var(--color-text-muted)]">ภาพรวมการเบิกจ่ายเงิน ปีงบประมาณ -</p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div id="cardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="skeleton h-32"></div><div class="skeleton h-32"></div>
+        <div class="skeleton h-32"></div><div class="skeleton h-32"></div>
+      </div>
+
+      <!-- Avg duration + Progress -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="card p-4 md:col-span-1 flex items-center gap-3">
+          <svg class="w-8 h-8 shrink-0" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p class="text-sm" id="avgDurationText">ระยะเวลาการดำเนินการเฉลี่ย (รับเรื่อง - อนุมัติ) : - วัน</p>
+        </div>
+        <div class="card p-4 md:col-span-2">
+          <div class="flex justify-between text-sm mb-1.5">
+            <span class="font-medium">สถานะการเบิกจ่ายสำเร็จ</span>
+            <span id="progressLabel" class="font-display font-semibold" style="color:var(--color-primary-dark)">0%</span>
+          </div>
+          <div class="w-full h-3 rounded-full bg-[var(--color-primary-soft)] overflow-hidden">
+            <div id="progressBar" class="h-full rounded-full transition-all duration-700" style="width:0%; background-color:var(--color-primary);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="card p-4">
+        <h3 class="font-display font-semibold mb-3" id="deptChartTitle">สถิติการเบิกจ่าย ปีงบประมาณ - แยกตามหน่วยงาน</h3>
+        <div class="h-72"><canvas id="chartDept"></canvas></div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="font-display font-semibold mb-3" id="typeChartTitle">สถิติประเภทการเบิกจ่าย ปีงบประมาณ -</h3>
+        <div class="h-80"><canvas id="chartTypeByDept"></canvas></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card p-4">
+          <h3 class="font-display font-semibold mb-3">จำนวนฎีกาที่รับเข้าระบบแต่ละเดือน</h3>
+          <div class="h-64"><canvas id="chartReceiveMonthly"></canvas></div>
+        </div>
+        <div class="card p-4">
+          <h3 class="font-display font-semibold mb-3">จำนวนฎีกาที่อนุมัติแต่ละเดือน</h3>
+          <div class="h-64"><canvas id="chartApproveMonthly"></canvas></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (App.requireLogin()) {
+      App.loadComponents();
+      init();
+    }
+
+    let moneyTypeColorMap = {};
+
+    async function init() {
+      try {
+        const [moneyTypesRes, summaryRes] = await Promise.all([
+          api.get('/api/settings/money-types'),
+          api.get('/api/dashboard/summary')
+        ]);
+        moneyTypesRes.data.forEach((m) => { moneyTypeColorMap[m.name] = m.color; });
+        renderDashboard(summaryRes);
+      } catch (err) {
+        App.errorAlert(err);
+      }
+    }
+
+    function renderDashboard(res) {
+      document.getElementById('subTitle').textContent = `ภาพรวมการเบิกจ่ายเงิน ปีงบประมาณ ${res.fiscal_year}`;
+      document.getElementById('deptChartTitle').textContent = `สถิติการเบิกจ่าย ปีงบประมาณ ${res.fiscal_year} แยกตามหน่วยงาน`;
+      document.getElementById('typeChartTitle').textContent = `สถิติประเภทการเบิกจ่าย ปีงบประมาณ ${res.fiscal_year}`;
+      document.getElementById('avgDurationText').textContent =
+        `ระยะเวลาการดำเนินการเฉลี่ย (รับเรื่อง - อนุมัติ) : ${res.avg_duration_days} วัน`;
+
+      document.getElementById('progressLabel').textContent = `${res.progress_percent}%`;
+      requestAnimationFrame(() => {
+        document.getElementById('progressBar').style.width = `${res.progress_percent}%`;
+      });
+
+      renderCards(res.cards);
+      renderDeptChart(res.dept_chart);
+      renderTypeByDeptChart(res.dept_money_chart);
+      renderMonthlyCharts(res.monthly_chart);
+    }
+
+    function renderCards(cards) {
+      const container = document.getElementById('cardsContainer');
+      container.innerHTML = cards.map((c) => {
+        const color = moneyTypeColorMap[c.money_type] || '#9F7AEA';
+        return `
+        <div class="kpi-card" style="--kpi-color:${color}">
+          <div class="flex justify-between items-start mb-2">
+            <span class="font-medium text-sm">${c.money_type}</span>
+            <span class="text-xs text-[var(--color-text-muted)] whitespace-nowrap">${c.done_count}/${c.total_count} ฎีกา</span>
+          </div>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span class="text-[var(--color-text-muted)]">เบิกแล้ว</span><span class="kpi-number text-base">${App.money(c.done_amount)}</span></div>
+            <div class="flex justify-between"><span class="text-[var(--color-text-muted)]">รอตรวจสอบ</span><span class="font-medium">${App.money(c.pending_amount)}</span></div>
+            <div class="flex justify-between pt-1 border-t border-[var(--color-border)]"><span class="text-[var(--color-text-muted)]">ขอเบิกทั้งสิ้น</span><span class="font-semibold">${App.money(c.requested_amount_total)}</span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderDeptChart(deptChart) {
+      new Chart(document.getElementById('chartDept'), {
+        type: 'bar',
+        data: {
+          labels: deptChart.map((d) => d.dept),
+          datasets: [{
+            label: 'จำนวนเงิน (บาท)',
+            data: deptChart.map((d) => d.total_amount),
+            backgroundColor: '#9F7AEA',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() } } }
+        }
+      });
+    }
+
+    function renderTypeByDeptChart(chartData) {
+      const palette = ['#9F7AEA', '#F59E0B', '#34D399', '#60A5FA', '#F472B6', '#A78BFA', '#808080'];
+      new Chart(document.getElementById('chartTypeByDept'), {
+        type: 'bar',
+        data: {
+          labels: chartData.depts,
+          datasets: chartData.series.map((s, i) => ({
+            label: s.money_type,
+            data: s.values,
+            backgroundColor: moneyTypeColorMap[s.money_type] || palette[i % palette.length],
+            borderRadius: 4
+          }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: { y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() } } }
+        }
+      });
+    }
+
+    function renderMonthlyCharts(m) {
+      new Chart(document.getElementById('chartReceiveMonthly'), {
+        type: 'line',
+        data: {
+          labels: m.labels,
+          datasets: [
+            { label: `ปีงบ ${m.current_year}`, data: m.received_current, borderColor: '#9F7AEA', backgroundColor: '#9F7AEA', tension: 0.3 },
+            { label: `ปีงบ ${m.previous_year}`, data: m.received_previous, borderColor: '#C4B5FD', backgroundColor: '#C4B5FD', borderDash: [5, 4], tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      new Chart(document.getElementById('chartApproveMonthly'), {
+        type: 'line',
+        data: {
+          labels: m.labels,
+          datasets: [
+            { label: `ปีงบ ${m.current_year}`, data: m.approved_current, borderColor: '#34D399', backgroundColor: '#34D399', tension: 0.3 },
+            { label: `ปีงบ ${m.previous_year}`, data: m.approved_previous, borderColor: '#A7F3D0', backgroundColor: '#A7F3D0', borderDash: [5, 4], tension: 0.3 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    // Re-render กราฟตอนหมุนจอมือถือ (ข้อ 7.9)
+    window.addEventListener('orientationchange', () => location.reload());
+  </script>
+</body>
+</html>

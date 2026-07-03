@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าโปรแกรม - SRDH PAY</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="header-placeholder"></div>
+  <div class="flex">
+    <div id="sidebar-placeholder"></div>
+
+    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
+      <div>
+        <h2 class="font-display font-bold text-xl">ตั้งค่าโปรแกรม</h2>
+        <p class="text-sm text-[var(--color-text-muted)]">ตั้งค่าโปรแกรมทะเบียนเบิกจ่ายเงิน รพส.</p>
+      </div>
+
+      <!-- Tab Nav -->
+      <div class="flex gap-1 flex-wrap border-b border-[var(--color-border)]">
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="fiscal">ปีงบประมาณ</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="money">ประเภทเงิน</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="vendor">เจ้าหนี้/บริษัท</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="editors">ผู้ตรวจ</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="display">การแสดงผล</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="dataEdit">แก้ไขข้อมูลรายการ</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="backup">Backup & Restore</button>
+      </div>
+
+      <!-- ==================== ปีงบประมาณ ==================== -->
+      <section id="panel-fiscal" class="hidden card p-5 max-w-lg space-y-4">
+        <h3 class="font-display font-semibold">กำหนดปีงบประมาณ</h3>
+        <div><label class="block text-sm font-medium mb-1">ปีงบประมาณ (พ.ศ.) *</label>
+          <input id="fy_year" type="number" placeholder="เช่น 2569" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-sm font-medium mb-1">วันที่เริ่มต้น</label><input id="fy_start" type="date" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+          <div><label class="block text-sm font-medium mb-1">วันที่สิ้นสุด</label><input id="fy_end" type="date" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-sm font-medium mb-1">วันเริ่มอนุญาตนำเข้า</label><input id="fy_allow_start" type="date" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+          <div><label class="block text-sm font-medium mb-1">วันสิ้นสุดอนุญาตนำเข้า</label><input id="fy_allow_end" type="date" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        </div>
+        <p class="text-xs text-[var(--color-text-muted)]">* staff นำเข้าข้อมูลนอกช่วงวันที่อนุญาตไม่ได้</p>
+        <button id="btnSaveFiscal" class="btn btn-primary">บันทึก</button>
+      </section>
+
+      <!-- ==================== ประเภทเงิน ==================== -->
+      <section id="panel-money" class="hidden space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="font-display font-semibold">กำหนดประเภทเงิน</h3>
+          <button id="btnAddMoney" class="btn btn-primary text-sm">+ เพิ่มประเภทเงิน</button>
+        </div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>ลำดับ</th><th>ประเภทเงิน</th><th>สี</th><th>สถานะ</th><th></th></tr></thead>
+          <tbody id="moneyBody"></tbody></table></div>
+      </section>
+
+      <!-- ==================== เจ้าหนี้ ==================== -->
+      <section id="panel-vendor" class="hidden space-y-3">
+        <div class="flex flex-wrap gap-2 justify-between items-center">
+          <h3 class="font-display font-semibold">รายชื่อเจ้าหนี้/บริษัท</h3>
+          <button id="btnAddVendor" class="btn btn-primary text-sm">+ เพิ่ม</button>
+        </div>
+        <input type="text" id="vendorSearch" data-search-box placeholder="ค้นหาชื่อเจ้าหนี้/บริษัท" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ</th><th>สถานะ</th><th></th></tr></thead>
+          <tbody id="vendorBody"></tbody></table></div>
+        <div id="vendorPagination" class="flex justify-between text-sm items-center"></div>
+      </section>
+
+      <!-- ==================== ผู้ตรวจ ==================== -->
+      <section id="panel-editors" class="hidden space-y-3">
+        <h3 class="font-display font-semibold">รายชื่อผู้ตรวจ (role = editor)</h3>
+        <p class="text-xs text-[var(--color-text-muted)]">แก้ไขสิทธิ์ผู้ตรวจได้ที่เมนู "ตั้งค่าผู้ใช้งาน"</p>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>อีเมล</th><th>หน่วยงาน</th><th>สถานะ</th></tr></thead>
+          <tbody id="editorsBody"></tbody></table></div>
+      </section>
+
+      <!-- ==================== การแสดงผล ==================== -->
+      <section id="panel-display" class="hidden card p-5 max-w-lg space-y-4">
+        <h3 class="font-display font-semibold">กำหนดการแสดงผล</h3>
+        <div><label class="block text-sm font-medium mb-1">จำนวน Card ประเภทเงินบน Dashboard (card summary)</label>
+          <input id="dp_top_money_type" type="number" min="1" max="10" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        <div><label class="block text-sm font-medium mb-1">จำนวน Top หน่วยงานในกราฟ</label>
+          <input id="dp_top_dept" type="number" min="1" max="20" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        <div><label class="block text-sm font-medium mb-1">จำนวน Top ประเภทเงินในกราฟ</label>
+          <input id="dp_top_money" type="number" min="1" max="10" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent"></div>
+        <p class="text-xs text-[var(--color-text-muted)]">รายการที่เกินจำนวนที่กำหนดจะถูกรวมเป็น "เงินอื่น" / "หน่วยงานอื่น"</p>
+        <button id="btnSaveDisplay" class="btn btn-primary">บันทึก</button>
+      </section>
+
+      <!-- ==================== แก้ไขข้อมูลรายการ ==================== -->
+      <section id="panel-dataEdit" class="hidden space-y-3">
+        <h3 class="font-display font-semibold">แก้ไขข้อมูลรายการ</h3>
+        <div class="card p-4 flex flex-wrap gap-2">
+          <select id="deSearchType" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+            <option value="">ทุกประเภท</option>
+            <option value="status">สถานะ</option>
+            <option value="receive_no">เลขที่รับ</option>
+            <option value="request_no">เลขที่ใบขอเบิก</option>
+            <option value="dk_no">เลขที่ฎีกา</option>
+            <option value="money_type">ประเภทเงิน</option>
+            <option value="dept">หน่วยงาน</option>
+            <option value="sender">ผู้ส่งเอกสาร</option>
+            <option value="editor">ผู้ตรวจ</option>
+            <option value="vendor">ชื่อเจ้าหนี้/บริษัท</option>
+          </select>
+          <input type="text" id="deSearchValue" data-search-box placeholder="ใส่คำค้นหา" class="flex-1 min-w-0 px-3.5 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+          <button id="btnDeSearch" class="btn btn-primary">ค้นหา</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>สถานะ</th><th>เลขที่ลงทะเบียน/วันที่</th><th>เลขที่รับ</th>
+              <th>เลขที่ใบขอเบิก/ฎีกา</th><th>ประเภทเงิน/หน่วยงาน</th><th>เจ้าหนี้/รายการ</th>
+              <th class="text-right">จำนวนเงิน</th><th>การจัดการ</th>
+            </tr></thead>
+            <tbody id="deTableBody"><tr><td colspan="8" class="text-center py-12 text-[var(--color-text-muted)]">ค้นหารายการด้านบนเพื่อเริ่มต้น</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== Backup & Restore ==================== -->
+      <section id="panel-backup" class="hidden card p-5 max-w-lg space-y-5">
+        <h3 class="font-display font-semibold">Backup & Restore</h3>
+        <div>
+          <h4 class="font-medium mb-2">Export ข้อมูล</h4>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnExportJson" class="btn btn-soft">Export JSON</button>
+            <button id="btnExportXlsx" class="btn btn-soft">Export XLSX</button>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-[var(--color-border)]">
+          <h4 class="font-medium mb-2">Restore ข้อมูล</h4>
+          <p class="text-xs text-[var(--color-text-muted)] mb-3">อัปโหลดไฟล์ JSON ที่ได้จากการ Export เพื่อนำข้อมูลกลับเข้าระบบ</p>
+          <input type="file" id="restoreFile" accept=".json" class="text-sm mb-2">
+          <button id="btnRestore" class="btn btn-danger">นำเข้า (Restore)</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (App.requireLogin()) { App.loadComponents(); init(); }
+
+    let moneyTypes = [], vendors = [], depts = [], editors = [];
+    let vendorPage = 1; const VENDOR_PAGE_SIZE = 50;
+    let deData = [];
+
+    async function init() {
+      bindTabs();
+      document.querySelector('[data-tab="fiscal"]').click();
+    }
+
+    /* ===== TABS ===== */
+    function bindTabs() {
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach((b) => b.style.borderColor = 'transparent');
+          btn.style.borderColor = 'var(--color-primary)';
+          document.querySelectorAll('section[id^="panel-"]').forEach((s) => s.classList.add('hidden'));
+          document.getElementById(`panel-${btn.dataset.tab}`).classList.remove('hidden');
+          loadTab(btn.dataset.tab);
+        });
+      });
+    }
+
+    const loaded = {};
+    async function loadTab(tab) {
+      if (loaded[tab]) return;
+      loaded[tab] = true;
+      if (tab === 'fiscal') loadFiscal();
+      if (tab === 'money') loadMoney();
+      if (tab === 'vendor') loadVendors();
+      if (tab === 'editors') loadEditors();
+      if (tab === 'display') loadDisplay();
+      if (tab === 'dataEdit') bindDataEdit();
+      if (tab === 'backup') bindBackup();
+    }
+
+    /* ===== ปีงบประมาณ ===== */
+    async function loadFiscal() {
+      try {
+        const res = await api.get('/api/settings/fiscal-year');
+        const d = res.data;
+        document.getElementById('fy_year').value = d.fiscal_year || '';
+        document.getElementById('fy_start').value = d.fiscal_start_date || '';
+        document.getElementById('fy_end').value = d.fiscal_end_date || '';
+        document.getElementById('fy_allow_start').value = d.import_allow_start || '';
+        document.getElementById('fy_allow_end').value = d.import_allow_end || '';
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnSaveFiscal').addEventListener('click', async () => {
+        try {
+          await api.put('/api/settings/fiscal-year', {
+            fiscal_year: parseInt(document.getElementById('fy_year').value, 10),
+            fiscal_start_date: document.getElementById('fy_start').value,
+            fiscal_end_date: document.getElementById('fy_end').value,
+            import_allow_start: document.getElementById('fy_allow_start').value,
+            import_allow_end: document.getElementById('fy_allow_end').value
+          });
+          App.toast('บันทึกปีงบประมาณสำเร็จ', 'success');
+        } catch (err) { App.errorAlert(err); }
+      });
+    }
+
+    /* ===== ประเภทเงิน ===== */
+    async function loadMoney() {
+      try {
+        const res = await api.get('/api/settings/money-types', { all: '1' });
+        moneyTypes = res.data;
+        renderMoney();
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnAddMoney').addEventListener('click', () => openMoneyForm(null));
+    }
+
+    function renderMoney() {
+      document.getElementById('moneyBody').innerHTML = moneyTypes.map((m) => `
+        <tr>
+          <td>${m.sort_order}</td>
+          <td class="font-medium">${m.name}</td>
+          <td><span class="inline-block w-6 h-6 rounded-full border border-[var(--color-border)]" style="background:${m.color}"></span> ${m.color}</td>
+          <td>${m.active ? '<span class="badge badge-PASSED">ใช้งาน</span>' : '<span class="badge badge-CANCELLED">ปิด</span>'}</td>
+          <td><button class="btn btn-soft text-xs py-1 px-2" onclick="openMoneyForm(${m.id})">แก้ไข</button></td>
+        </tr>`).join('') || '<tr><td colspan="5" class="text-center py-6 text-[var(--color-text-muted)]">ยังไม่มีประเภทเงิน</td></tr>';
+    }
+
+    window.openMoneyForm = function (id) {
+      const m = id ? moneyTypes.find((x) => x.id === id) : null;
+      Swal.fire({
+        title: m ? 'แก้ไขประเภทเงิน' : 'เพิ่มประเภทเงิน',
+        html: `
+          <div class="text-left text-sm space-y-3">
+            <div><label class="block mb-1 font-medium">ชื่อประเภทเงิน *</label>
+              <input id="f_name" value="${m?.name || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">สี (HEX) *</label>
+              <div class="flex gap-2">
+                <input type="color" id="f_color_picker" value="${m?.color || '#808080'}" class="w-10 h-10 rounded cursor-pointer">
+                <input id="f_color" value="${m?.color || '#808080'}" class="flex-1 px-3 py-2 rounded-lg border border-gray-300" placeholder="#808080">
+              </div></div>
+            <div><label class="block mb-1 font-medium">ลำดับ</label>
+              <input id="f_sort" type="number" value="${m?.sort_order || 99}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            ${m ? `<label class="flex items-center gap-2"><input type="checkbox" id="f_active" ${m.active ? 'checked' : ''}> ใช้งาน</label>` : ''}
+          </div>`,
+        showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA',
+        didOpen: () => {
+          document.getElementById('f_color_picker').addEventListener('input', (e) => { document.getElementById('f_color').value = e.target.value; });
+          document.getElementById('f_color').addEventListener('input', (e) => { document.getElementById('f_color_picker').value = e.target.value; });
+        },
+        preConfirm: () => {
+          const name = document.getElementById('f_name').value.trim();
+          const color = document.getElementById('f_color').value.trim();
+          if (!name || !color) { Swal.showValidationMessage('กรุณากรอกชื่อและสี'); return false; }
+          return { name, color, sort_order: parseInt(document.getElementById('f_sort').value, 10) || 99, active: m ? document.getElementById('f_active').checked : true };
+        }
+      }).then(async (r) => {
+        if (!r.isConfirmed) return;
+        try {
+          if (m) await api.put(`/api/settings/money-types/${m.id}`, r.value);
+          else await api.post('/api/settings/money-types', r.value);
+          App.toast('บันทึกสำเร็จ', 'success');
+          delete loaded['money'];
+          loadMoney();
+        } catch (err) { App.errorAlert(err); }
+      });
+    };
+
+    /* ===== เจ้าหนี้ ===== */
+    async function loadVendors() {
+      try {
+        const res = await api.get('/api/settings/vendors', { page: vendorPage, pageSize: VENDOR_PAGE_SIZE, search: document.getElementById('vendorSearch')?.value || '' });
+        vendors = res.data;
+        renderVendors(res);
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnAddVendor').addEventListener('click', () => openVendorForm(null));
+      document.getElementById('vendorSearch').addEventListener('input', App.debounce(() => { vendorPage = 1; delete loaded['vendor']; loaded['vendor'] = true; loadVendors(); }, 400));
+    }
+
+    function renderVendors(res) {
+      document.getElementById('vendorBody').innerHTML = vendors.map((v) => `
+        <tr>
+          <td class="font-medium">${v.name}</td>
+          <td>${v.active ? '<span class="badge badge-PASSED">ใช้งาน</span>' : '<span class="badge badge-CANCELLED">ปิด</span>'}</td>
+          <td><button class="btn btn-soft text-xs py-1 px-2" onclick="openVendorForm(${v.id})">แก้ไข</button></td>
+        </tr>`).join('') || '<tr><td colspan="3" class="text-center py-6 text-[var(--color-text-muted)]">ยังไม่มีเจ้าหนี้</td></tr>';
+
+      document.getElementById('vendorPagination').innerHTML = `
+        <span class="text-[var(--color-text-muted)]">หน้า ${res.page} / ${Math.ceil(res.total / VENDOR_PAGE_SIZE) || 1} (${res.total} รายการ)</span>
+        <div class="flex gap-2">
+          <button class="btn btn-outline" onclick="changeVendorPage(-1)" ${res.page <= 1 ? 'disabled' : ''}>ก่อนหน้า</button>
+          <button class="btn btn-outline" onclick="changeVendorPage(1)" ${res.page >= Math.ceil(res.total / VENDOR_PAGE_SIZE) ? 'disabled' : ''}>ถัดไป</button>
+        </div>`;
+    }
+    window.changeVendorPage = function (dir) { vendorPage += dir; delete loaded['vendor']; loaded['vendor'] = true; loadVendors(); };
+
+    window.openVendorForm = function (id) {
+      const v = id ? vendors.find((x) => x.id === id) : null;
+      Swal.fire({
+        title: v ? 'แก้ไขชื่อเจ้าหนี้' : 'เพิ่มเจ้าหนี้/บริษัท',
+        html: `<div class="text-left text-sm space-y-3">
+          <div><label class="block mb-1 font-medium">ชื่อเจ้าหนี้/บริษัท *</label><input id="f_vname" value="${v?.name || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+          ${v ? `<label class="flex items-center gap-2"><input type="checkbox" id="f_vactive" ${v.active ? 'checked' : ''}> ใช้งาน</label>` : ''}
+        </div>`,
+        showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA',
+        preConfirm: () => {
+          const name = document.getElementById('f_vname').value.trim();
+          if (!name) { Swal.showValidationMessage('กรุณากรอกชื่อ'); return false; }
+          return { name, active: v ? document.getElementById('f_vactive').checked : true };
+        }
+      }).then(async (r) => {
+        if (!r.isConfirmed) return;
+        try {
+          if (v) await api.put(`/api/settings/vendors/${v.id}`, r.value);
+          else await api.post('/api/settings/vendors', r.value);
+          App.toast('บันทึกสำเร็จ', 'success');
+          delete loaded['vendor']; loadVendors();
+        } catch (err) { App.errorAlert(err); }
+      });
+    };
+
+    /* ===== ผู้ตรวจ ===== */
+    async function loadEditors() {
+      try {
+        const res = await api.get('/api/settings/editors');
+        editors = res.data;
+        document.getElementById('editorsBody').innerHTML = editors.map((e) => `
+          <tr><td class="font-medium">${e.username}</td><td>${e.email}</td><td>${e.dept}</td>
+            <td>${e.active ? '<span class="badge badge-PASSED">ใช้งาน</span>' : '<span class="badge badge-CANCELLED">ปิด</span>'}</td></tr>`)
+          .join('') || '<tr><td colspan="4" class="text-center py-6 text-[var(--color-text-muted)]">ไม่พบผู้ตรวจ (role = editor)</td></tr>';
+      } catch (err) { App.errorAlert(err); }
+    }
+
+    /* ===== การแสดงผล ===== */
+    async function loadDisplay() {
+      try {
+        const res = await api.get('/api/settings/display');
+        const d = res.data;
+        document.getElementById('dp_top_money_type').value = d.dashboard_top_money_type || 4;
+        document.getElementById('dp_top_dept').value = d.dashboard_top_dept || 5;
+        document.getElementById('dp_top_money').value = d.dashboard_top_money || 4;
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnSaveDisplay').addEventListener('click', async () => {
+        try {
+          await api.put('/api/settings/display', {
+            dashboard_top_money_type: parseInt(document.getElementById('dp_top_money_type').value, 10),
+            dashboard_top_dept: parseInt(document.getElementById('dp_top_dept').value, 10),
+            dashboard_top_money: parseInt(document.getElementById('dp_top_money').value, 10)
+          });
+          App.toast('บันทึกการแสดงผลสำเร็จ', 'success');
+        } catch (err) { App.errorAlert(err); }
+      });
+    }
+
+    /* ===== แก้ไขข้อมูลรายการ ===== */
+    function bindDataEdit() {
+      document.getElementById('btnDeSearch').addEventListener('click', doDeSearch);
+      document.getElementById('deSearchValue').addEventListener('keydown', (e) => { if (e.key === 'Enter') doDeSearch(); });
+    }
+
+    async function doDeSearch() {
+      const type = document.getElementById('deSearchType').value;
+      const value = document.getElementById('deSearchValue').value.trim();
+      document.getElementById('deTableBody').innerHTML = `<tr><td colspan="8"><div class="skeleton h-6 my-1"></div></td></tr>`.repeat(4);
+      try {
+        const res = await api.get('/api/settings/register-search', { type, value });
+        deData = res.data;
+        renderDeTable();
+      } catch (err) { App.errorAlert(err); }
+    }
+
+    function renderDeTable() {
+      const tbody = document.getElementById('deTableBody');
+      if (deData.length === 0) { tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-[var(--color-text-muted)]">ไม่พบรายการ</td></tr>`; return; }
+      tbody.innerHTML = deData.map((r) => `
+        <tr>
+          <td>${App.statusBadge(r.status)}</td>
+          <td><div class="text-xs">${App.emptyDash(r.register_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.thaiDate(r.register_date)}</div></td>
+          <td class="text-xs">${App.emptyDash(r.receive_no_display)}</td>
+          <td><div class="text-xs">${App.emptyDash(r.request_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.emptyDash(r.dk_no_display)}</div></td>
+          <td><div class="text-xs">${r.money_type}</div><div class="text-xs text-[var(--color-text-muted)]">${r.dept}</div></td>
+          <td><div class="font-semibold text-xs">${r.vendor}</div><div class="text-xs text-[var(--color-text-muted)] max-w-xs truncate">${r.description}</div></td>
+          <td class="text-right text-sm font-display font-semibold">${App.money(r.amount)}</td>
+          <td>
+            <div class="flex gap-1">
+              <button class="btn btn-soft text-xs py-1 px-2" onclick="openEditPopup('${r.uuid}')">แก้ไข</button>
+              ${r.status !== 'CANCELLED'
+                ? `<button class="btn btn-outline text-xs py-1 px-2 text-red-500" onclick="doCancelItem('${r.uuid}')">ยกเลิก</button>`
+                : `<button class="btn btn-soft text-xs py-1 px-2" onclick="doRestoreItem('${r.uuid}')">กู้คืน</button>`}
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    window.openEditPopup = async function (uuid) {
+      const r = deData.find((x) => x.uuid === uuid);
+      if (!r) return;
+      const user = App.getUser();
+      let mOptions = '', vOptions = '', dOptions = '', edOptions = '';
+      try {
+        const [mt, ve, dp, ed] = await Promise.all([
+          api.get('/api/settings/money-types'), api.get('/api/settings/vendors'),
+          api.get('/api/settings/depts'), api.get('/api/settings/editors')
+        ]);
+        mOptions = mt.data.map((m) => `<option value="${m.name}" ${m.name === r.money_type ? 'selected' : ''}>${m.name}</option>`).join('');
+        vOptions = ve.data.map((v) => `<option value="${v.name}" ${v.name === r.vendor ? 'selected' : ''}>${v.name}</option>`).join('');
+        dOptions = dp.data.map((d) => `<option value="${d.name}" ${d.name === r.dept ? 'selected' : ''}>${d.name}</option>`).join('');
+        edOptions = `<option value="">-- ไม่ระบุ --</option>` + ed.data.map((e) => `<option value="${e.username}" ${e.username === r.editor ? 'selected' : ''}>${e.username}</option>`).join('');
+      } catch { /* ไม่ critical */ }
+
+      Swal.fire({
+        title: 'แก้ไขข้อมูลรายการ', width: 680,
+        html: `
+          <div class="grid grid-cols-2 gap-3 text-left text-sm">
+            <div><label class="block mb-1 font-medium">สถานะ</label><input value="${r.status_display || r.status}" disabled class="w-full px-3 py-2 rounded-lg border border-gray-300 opacity-60"></div>
+            <div><label class="block mb-1 font-medium">เลขที่ลงทะเบียน</label><input value="${r.register_no_display || '-'}" disabled class="w-full px-3 py-2 rounded-lg border border-gray-300 opacity-60"></div>
+            <div><label class="block mb-1 font-medium">เลขที่ใบขอเบิก</label><input id="ef_request_no" value="${r.request_no_display || ''}" placeholder="1/69" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">เลขที่ฎีกา</label><input id="ef_dk_no" value="${r.dk_no_display || ''}" placeholder="1801/69" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">ประเภทเงิน</label><select id="ef_money_type" class="w-full px-3 py-2 rounded-lg border border-gray-300">${mOptions}</select></div>
+            <div><label class="block mb-1 font-medium">หน่วยงาน</label><select id="ef_dept" class="w-full px-3 py-2 rounded-lg border border-gray-300">${dOptions}</select></div>
+            <div><label class="block mb-1 font-medium">ผู้ส่งเอกสาร</label><input id="ef_sender" value="${r.sender || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">ผู้ตรวจ</label><select id="ef_editor" class="w-full px-3 py-2 rounded-lg border border-gray-300">${edOptions}</select></div>
+            <div><label class="block mb-1 font-medium">ชื่อเจ้าหนี้/บริษัท</label><select id="ef_vendor" class="w-full px-3 py-2 rounded-lg border border-gray-300"><option value="">--</option>${vOptions}</select></div>
+            <div><label class="block mb-1 font-medium">จำนวนเงิน</label><input id="ef_amount" type="number" value="${r.amount || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div class="col-span-2"><label class="block mb-1 font-medium">รายการ</label><input id="ef_description" value="${r.description || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">วันที่ส่งแก้ไข</label><input id="ef_edit_date" type="date" value="${r.edit_date ? r.edit_date.slice(0,10) : ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">วันที่รับคืน</label><input id="ef_return_date" type="date" value="${r.return_date ? r.return_date.slice(0,10) : ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">วันที่ตรวจผ่าน</label><input id="ef_pass_date" type="date" value="${r.pass_date ? r.pass_date.slice(0,10) : ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">วันที่เสนอ</label><input id="ef_propose_date" type="date" value="${r.propose_date ? r.propose_date.slice(0,10) : ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">วันที่อนุมัติ</label><input id="ef_approve_date" type="date" value="${r.approve_date ? r.approve_date.slice(0,10) : ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">เลขที่ใบกัน</label><input id="ef_reserve_no" value="${r.reserve_no || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">จำนวนเงินกัน</label><input id="ef_reserve_amount" type="number" value="${r.reserve_amount || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">เลข e-GP</label><input id="ef_egp_no" value="${r.egp_no || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+            <div><label class="block mb-1 font-medium">Invoice</label><input id="ef_invoice" value="${r.invoice || ''}" class="w-full px-3 py-2 rounded-lg border border-gray-300"></div>
+          </div>`,
+        showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA',
+        preConfirm: () => ({
+          request_no_display: document.getElementById('ef_request_no').value.trim() || undefined,
+          dk_no_display: document.getElementById('ef_dk_no').value.trim() || undefined,
+          money_type: document.getElementById('ef_money_type').value || undefined,
+          dept: document.getElementById('ef_dept').value || undefined,
+          sender: document.getElementById('ef_sender').value.trim() || undefined,
+          editor: document.getElementById('ef_editor').value || undefined,
+          vendor: document.getElementById('ef_vendor').value || undefined,
+          amount: parseFloat(document.getElementById('ef_amount').value) || undefined,
+          description: document.getElementById('ef_description').value.trim() || undefined,
+          edit_date: document.getElementById('ef_edit_date').value || undefined,
+          return_date: document.getElementById('ef_return_date').value || undefined,
+          pass_date: document.getElementById('ef_pass_date').value || undefined,
+          propose_date: document.getElementById('ef_propose_date').value || undefined,
+          approve_date: document.getElementById('ef_approve_date').value || undefined,
+          reserve_no: document.getElementById('ef_reserve_no').value.trim() || undefined,
+          reserve_amount: parseFloat(document.getElementById('ef_reserve_amount').value) || undefined,
+          egp_no: document.getElementById('ef_egp_no').value.trim() || undefined,
+          invoice: document.getElementById('ef_invoice').value.trim() || undefined
+        })
+      }).then(async (res) => {
+        if (!res.isConfirmed) return;
+        const payload = Object.fromEntries(Object.entries(res.value).filter(([, v]) => v !== undefined));
+        App.showLoading('กำลังบันทึก...');
+        try {
+          await api.put(`/api/settings/register/${uuid}`, payload);
+          App.closeLoading();
+          App.toast('แก้ไขสำเร็จ', 'success');
+          doDeSearch();
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+      });
+    };
+
+    window.doCancelItem = async function (uuid) {
+      const result = await Swal.fire({
+        title: 'ยืนยันยกเลิกรายการ', input: 'textarea',
+        inputLabel: 'หมายเหตุการยกเลิก *', inputPlaceholder: 'กรอกหมายเหตุ...',
+        showCancelButton: true, confirmButtonText: 'ยกเลิกรายการ', cancelButtonText: 'ปิด', confirmButtonColor: '#DC2626',
+        inputValidator: (v) => !v.trim() && 'กรุณากรอกหมายเหตุ'
+      });
+      if (!result.isConfirmed) return;
+      try {
+        await api.post('/api/register/cancel', { uuid, cancel_note: result.value.trim() });
+        App.toast('ยกเลิกรายการสำเร็จ', 'success');
+        doDeSearch();
+      } catch (err) { App.errorAlert(err); }
+    };
+
+    window.doRestoreItem = async function (uuid) {
+      const r = deData.find((x) => x.uuid === uuid);
+      const prevStatus = r?.cancel_change || 'WAITING';
+      const confirm = await Swal.fire({
+        title: 'ยืนยันกู้คืนรายการ?',
+        html: `<p class="text-sm">ระบบจะเปลี่ยนสถานะกลับเป็น <strong>${prevStatus}</strong></p>`,
+        showCancelButton: true, confirmButtonText: 'กู้คืน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA'
+      });
+      if (!confirm.isConfirmed) return;
+      try {
+        await api.post('/api/register/restore', { uuid });
+        App.toast('กู้คืนรายการสำเร็จ', 'success');
+        doDeSearch();
+      } catch (err) { App.errorAlert(err); }
+    };
+
+    /* ===== Backup & Restore ===== */
+    function bindBackup() {
+      document.getElementById('btnExportJson').addEventListener('click', async () => {
+        App.showLoading('กำลัง Export...');
+        try {
+          const res = await api.get('/api/settings/backup');
+          App.closeLoading();
+          const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `srdhpay-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+      });
+
+      document.getElementById('btnExportXlsx').addEventListener('click', async () => {
+        App.showLoading('กำลัง Export...');
+        try {
+          const res = await api.get('/api/settings/backup');
+          App.closeLoading();
+          const ws = XLSX.utils.json_to_sheet(res.data);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'register');
+          XLSX.writeFile(wb, `srdhpay-backup-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+      });
+
+      document.getElementById('btnRestore').addEventListener('click', async () => {
+        const file = document.getElementById('restoreFile').files[0];
+        if (!file) return App.toast('กรุณาเลือกไฟล์ JSON ก่อน', 'warning');
+        const confirm = await Swal.fire({
+          title: 'ยืนยัน Restore ข้อมูล?',
+          text: 'ระบบจะนำข้อมูลจากไฟล์เพิ่มเข้าระบบ (ข้อมูลเดิมยังคงอยู่ แต่รายการที่ UUID ซ้ำจะถูก overwrite)',
+          icon: 'warning', showCancelButton: true, confirmButtonText: 'Restore', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#DC2626'
+        });
+        if (!confirm.isConfirmed) return;
+        const text = await file.text();
+        let rows;
+        try { rows = JSON.parse(text); } catch { return App.toast('ไฟล์ JSON ไม่ถูกต้อง', 'error'); }
+        App.showLoading('กำลัง Restore...');
+        try {
+          const res = await api.post('/api/settings/restore', { rows });
+          App.closeLoading();
+          App.toast(`Restore สำเร็จ ${res.count} รายการ`, 'success');
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+      });
+    }
+  </script>
+</body>
+</html>

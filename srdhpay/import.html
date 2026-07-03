@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>นำเข้าข้อมูล - SRDH PAY</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body class="min-h-screen">
+  <div id="header-placeholder"></div>
+  <div class="flex">
+    <div id="sidebar-placeholder"></div>
+
+    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
+
+      <!-- หัวหน้า -->
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display font-bold text-xl">นำเข้าข้อมูล</h2>
+          <p class="text-sm text-[var(--color-text-muted)]">ลงทะเบียนรับฎีกาเข้าระบบ</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <button id="btnAddRow" class="btn btn-soft">+ เพิ่มรายการ</button>
+          <button id="btnRegister" class="btn btn-primary" disabled>ลงทะเบียน</button>
+          <button id="btnPrintSlip" class="btn btn-outline">พิมพ์ใบลงทะเบียน</button>
+        </div>
+      </div>
+
+      <!-- Drag & Drop Zone -->
+      <div id="dropZone" class="card p-8 border-2 border-dashed border-[var(--color-primary)] text-center cursor-pointer hover:bg-[var(--color-primary-soft)] transition">
+        <svg class="w-10 h-10 mx-auto mb-2 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16v-8m0 0l-3 3m3-3l3 3M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1"/>
+        </svg>
+        <p class="text-sm font-medium text-[var(--color-text-muted)]">ลากไฟล์ .xlsx มาวาง<br>หรือคลิกเพื่อเลือกไฟล์ (รองรับไฟล์สูงสุด 5MB)</p>
+        <input type="file" id="fileInput" accept=".xlsx" class="hidden">
+      </div>
+
+      <!-- Preview Table -->
+      <div id="previewSection" class="hidden space-y-3">
+        <div class="flex justify-between items-center">
+          <span id="previewCount" class="text-sm font-medium text-[var(--color-text-muted)]">0 รายการ</span>
+          <button id="btnClearRows" class="btn btn-outline text-sm text-red-500 border-red-300">ล้างรายการทั้งหมด</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th><th>สถานะ</th><th>เลขที่ใบขอเบิก</th><th>เลขที่ฎีกา</th>
+                <th>ประเภทเงิน</th><th>ชื่อเจ้าหนี้/บริษัท</th><th>รายการ</th>
+                <th class="text-right">จำนวนเงิน</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ========================= Print Area ========================= -->
+  <div id="printArea" class="hidden p-8 text-sm leading-relaxed">
+    <div class="text-center font-bold text-base mb-1">ใบนำส่งเอกสารเบิกจ่าย</div>
+    <div class="text-center mb-4">เลขที่ลงทะเบียน <span id="printRegNo" class="font-bold"></span></div>
+    <div class="flex justify-between mb-4">
+      <span>ผู้ส่งเอกสาร: <span id="printSender" class="font-medium"></span></span>
+      <span>หน่วยงาน: <span id="printDept" class="font-medium"></span></span>
+      <span>วันที่: <span id="printDate" class="font-medium"></span></span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:#EDE6FB">
+          <th style="border:1px solid #ccc;padding:6px;text-align:left">วันที่ลงทะเบียน</th>
+          <th style="border:1px solid #ccc;padding:6px;text-align:left">ประเภทเงิน</th>
+          <th style="border:1px solid #ccc;padding:6px;text-align:left">เลขที่ใบขอเบิก</th>
+          <th style="border:1px solid #ccc;padding:6px;text-align:left">ชื่อเจ้าหนี้/บริษัท</th>
+          <th style="border:1px solid #ccc;padding:6px;text-align:left">รายการ</th>
+          <th style="border:1px solid #ccc;padding:6px;text-align:right">จำนวนเงิน</th>
+        </tr>
+      </thead>
+      <tbody id="printBody"></tbody>
+      <tfoot id="printFoot"></tfoot>
+    </table>
+  </div>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (App.requireLogin()) {
+      App.loadComponents();
+      init();
+    }
+
+    /* -------- State -------- */
+    let rows = [];        // รายการที่รอลงทะเบียน
+    let moneyTypes = [];  // จาก settings_money_type
+    let vendors = [];     // จาก settings_vendor
+    let depts = [];       // จาก settings_dept
+    let currentUser = null;
+    let importLimit = 100;
+
+    /* -------- Init -------- */
+    async function init() {
+      currentUser = App.getUser();
+      try {
+        const [mtRes, vRes, dRes] = await Promise.all([
+          api.get('/api/settings/money-types'),
+          api.get('/api/settings/vendors'),
+          api.get('/api/settings/depts')
+        ]);
+        moneyTypes = mtRes.data.filter((m) => m.active);
+        vendors = vRes.data.filter((v) => v.active);
+        depts = dRes.data.filter((d) => d.active);
+
+        // ดึง limit ตาม role จาก settings_app
+        const limRes = await api.get('/api/settings/display').catch(() => null);
+        if (currentUser.role === 'staff') {
+          importLimit = parseInt(limRes?.staff_import_limit || 20, 10);
+        } else {
+          importLimit = parseInt(limRes?.admin_import_limit || 100, 10);
+        }
+      } catch (err) { App.errorAlert(err); }
+
+      bindEvents();
+      App.setupShortcuts({ onSave: () => { if (!document.getElementById('btnRegister').disabled) doRegister(); } });
+    }
+
+    /* -------- Bind Events -------- */
+    function bindEvents() {
+      document.getElementById('btnAddRow').addEventListener('click', () => openRowForm(null));
+      document.getElementById('btnRegister').addEventListener('click', doRegister);
+      document.getElementById('btnClearRows').addEventListener('click', () => {
+        if (rows.length === 0) return;
+        Swal.fire({
+          title: 'ล้างรายการทั้งหมด?', icon: 'warning', showCancelButton: true,
+          confirmButtonText: 'ล้าง', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#DC2626'
+        }).then((r) => { if (r.isConfirmed) { rows = []; renderPreview(); } });
+      });
+      document.getElementById('btnPrintSlip').addEventListener('click', openPrintSlipModal);
+
+      // Drag & Drop
+      const zone = document.getElementById('dropZone');
+      zone.addEventListener('click', () => document.getElementById('fileInput').click());
+      zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('bg-[var(--color-primary-soft)]'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('bg-[var(--color-primary-soft)]'));
+      zone.addEventListener('drop', (e) => { e.preventDefault(); handleXlsxFile(e.dataTransfer.files[0]); });
+      document.getElementById('fileInput').addEventListener('change', (e) => handleXlsxFile(e.target.files[0]));
+    }
+
+    /* -------- XLSX Import -------- */
+    function handleXlsxFile(file) {
+      if (!file) return;
+      if (!file.name.endsWith('.xlsx')) return App.toast('รองรับเฉพาะไฟล์ .xlsx เท่านั้น', 'warning');
+      if (file.size > 5 * 1024 * 1024) return App.toast('ไฟล์ใหญ่เกิน 5MB', 'warning');
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+          const imported = raw.map((r, i) => ({
+            _id: Date.now() + i,
+            source: 'IMPORT',
+            money_type: r.bgtype_name || '',
+            request_no_display: r.bgdk_rcvno || '',
+            dk_no_display: r.bgdk_dkno || '',
+            egp_no: r.bgdk_egpno || '',
+            vendor: r.bgdk_paytonm || '',
+            amount: (parseFloat(r.bgdk_dkamt) || 0) + (parseFloat(r.bgdk_vatamt) || 0),
+            description: String(r.bgdk_note || '').split('\n')[0],
+            dept: currentUser.role === 'staff' ? currentUser.dept : (r.dept || currentUser.dept),
+            sender: currentUser.role === 'staff' ? currentUser.username : (r.sender || currentUser.username),
+            reserve_no: '', reserve_amount: 0, invoice: '',
+            _from_xlsx: true  // fields ที่ import จาก xlsx แก้ไขไม่ได้บางส่วน
+          }));
+
+          rows = [...rows, ...imported].slice(0, importLimit);
+          renderPreview();
+          App.toast(`นำเข้า ${imported.length} รายการสำเร็จ`, 'success');
+        } catch (err) {
+          App.toast('อ่านไฟล์ไม่ได้ กรุณาตรวจสอบรูปแบบไฟล์', 'error');
+        }
+        document.getElementById('fileInput').value = '';
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* -------- Render Preview Table -------- */
+    function renderPreview() {
+      const section = document.getElementById('previewSection');
+      const tbody = document.getElementById('previewBody');
+      const btnReg = document.getElementById('btnRegister');
+
+      section.classList.toggle('hidden', rows.length === 0);
+      document.getElementById('previewCount').textContent = `${rows.length} รายการ`;
+      btnReg.disabled = rows.length === 0;
+
+      if (rows.length === 0) return;
+
+      tbody.innerHTML = rows.map((r, idx) => {
+        const errors = validateRow(r);
+        const statusHtml = errors.length > 0
+          ? `<span class="badge badge-EDITING" title="${errors.join(', ')}">⚠ ไม่ครบ</span>`
+          : `<span class="badge badge-PASSED">✓ พร้อม</span>`;
+        return `
+          <tr>
+            <td class="text-[var(--color-text-muted)]">${idx + 1}</td>
+            <td>${statusHtml}</td>
+            <td>${App.emptyDash(r.request_no_display)}</td>
+            <td>${App.emptyDash(r.dk_no_display)}</td>
+            <td><span class="text-xs">${r.money_type}</span></td>
+            <td>${r.vendor}</td>
+            <td class="max-w-xs truncate" title="${r.description}">${r.description}</td>
+            <td class="text-right font-medium whitespace-nowrap">${App.money(r.amount)}</td>
+            <td>
+              <div class="flex gap-1">
+                <button class="btn btn-soft text-xs py-1 px-2" onclick="openRowForm(${idx})">แก้ไข</button>
+                <button class="btn btn-outline text-xs py-1 px-2 text-red-500" onclick="removeRow(${idx})">ลบ</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function validateRow(r) {
+      const errs = [];
+      if (!r.money_type) errs.push('ขาดประเภทเงิน');
+      if (!r.vendor) errs.push('ขาดเจ้าหนี้');
+      if (!r.amount || Number(r.amount) <= 0) errs.push('จำนวนเงินไม่ถูกต้อง');
+      if (!r.description) errs.push('ขาดรายการ');
+      if (!r.request_no_display) errs.push('ขาดเลขที่ใบขอเบิก');
+      return errs;
+    }
+
+    window.removeRow = function (idx) { rows.splice(idx, 1); renderPreview(); };
+
+    /* -------- Row Form Popup -------- */
+    window.openRowForm = function (idx) {
+      const isEdit = idx !== null;
+      const r = isEdit ? { ...rows[idx] } : {
+        _id: Date.now(), source: 'MANUAL',
+        money_type: '', request_no_display: '', dk_no_display: '',
+        egp_no: '', vendor: '', amount: '', description: '',
+        dept: currentUser.dept || '', sender: currentUser.username || '',
+        reserve_no: '', reserve_amount: 0, invoice: '', _from_xlsx: false
+      };
+
+      const fromXlsx = r._from_xlsx;
+      const mtOptions = moneyTypes.map((m) => `<option value="${m.name}" ${m.name === r.money_type ? 'selected' : ''}>${m.name}</option>`).join('');
+      const vendorOptions = vendors.map((v) => `<option value="${v.name}" ${v.name === r.vendor ? 'selected' : ''}>${v.name}</option>`).join('');
+      const deptOptions = depts.map((d) => `<option value="${d.name}" ${d.name === r.dept ? 'selected' : ''}>${d.name}</option>`).join('');
+
+      Swal.fire({
+        title: isEdit ? 'แก้ไขรายการ' : 'เพิ่มรายการ',
+        width: 680,
+        html: `
+          <div class="grid grid-cols-2 gap-3 text-left text-sm">
+            <div>
+              <label class="block mb-1 font-medium">ประเภทเงิน *</label>
+              ${fromXlsx
+                ? `<input value="${r.money_type}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<select id="f_money_type" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent"><option value="">-- เลือก --</option>${mtOptions}</select>`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">หน่วยงาน</label>
+              ${currentUser.role === 'staff'
+                ? `<input value="${r.dept}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<select id="f_dept" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">${deptOptions}</select>`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">ผู้ส่งเอกสาร</label>
+              <input id="f_sender" value="${r.sender}" ${currentUser.role === 'staff' ? 'disabled' : ''}
+                class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent ${currentUser.role === 'staff' ? 'opacity-60' : ''}">
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">เลขที่ใบขอเบิก * <span class="text-xs text-[var(--color-text-muted)]">(เช่น 1/69)</span></label>
+              ${fromXlsx
+                ? `<input value="${r.request_no_display}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<input id="f_request_no" value="${r.request_no_display}" placeholder="1/69" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">เลขที่ฎีกา <span class="text-xs text-[var(--color-text-muted)]">(เช่น 1801/69)</span></label>
+              ${fromXlsx
+                ? `<input value="${r.dk_no_display}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<input id="f_dk_no" value="${r.dk_no_display}" placeholder="1801/69 (ไม่บังคับ)" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">เลขที่ใบกัน</label>
+              <input id="f_reserve_no" value="${r.reserve_no}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">จำนวนเงินกัน</label>
+              <input id="f_reserve_amount" type="number" value="${r.reserve_amount || ''}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">เลขที่โครงการ (e-GP)</label>
+              ${fromXlsx
+                ? `<input value="${r.egp_no}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<input id="f_egp_no" value="${r.egp_no}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">Invoice</label>
+              <input id="f_invoice" value="${r.invoice}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">
+            </div>
+            <div class="col-span-2">
+              <label class="block mb-1 font-medium">ชื่อเจ้าหนี้/บริษัท *</label>
+              ${fromXlsx
+                ? `<input value="${r.vendor}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<select id="f_vendor" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent"><option value="">-- เลือก --</option>${vendorOptions}</select>`}
+            </div>
+            <div>
+              <label class="block mb-1 font-medium">จำนวนเงินขอเบิก (บาท) *</label>
+              ${fromXlsx
+                ? `<input value="${r.amount}" disabled class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent opacity-60">`
+                : `<input id="f_amount" type="number" step="0.01" value="${r.amount}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">`}
+            </div>
+            <div class="col-span-2">
+              <label class="block mb-1 font-medium">รายการ *</label>
+              <input id="f_description" value="${r.description}" class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent">
+            </div>
+          </div>`,
+        showCancelButton: true,
+        confirmButtonText: isEdit ? 'บันทึก' : 'เพิ่ม',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#9F7AEA',
+        preConfirm: () => {
+          const updated = { ...r };
+          if (!fromXlsx) {
+            updated.money_type = document.getElementById('f_money_type')?.value || r.money_type;
+            updated.request_no_display = document.getElementById('f_request_no')?.value.trim() || r.request_no_display;
+            updated.dk_no_display = document.getElementById('f_dk_no')?.value.trim() || '';
+            updated.egp_no = document.getElementById('f_egp_no')?.value.trim() || '';
+            updated.vendor = document.getElementById('f_vendor')?.value || r.vendor;
+            updated.amount = parseFloat(document.getElementById('f_amount')?.value) || 0;
+          }
+          if (currentUser.role !== 'staff') {
+            updated.dept = document.getElementById('f_dept')?.value || r.dept;
+            updated.sender = document.getElementById('f_sender')?.value.trim() || r.sender;
+          }
+          updated.reserve_no = document.getElementById('f_reserve_no')?.value.trim() || '';
+          updated.reserve_amount = parseFloat(document.getElementById('f_reserve_amount')?.value) || 0;
+          updated.invoice = document.getElementById('f_invoice')?.value.trim() || '';
+          updated.description = document.getElementById('f_description')?.value.trim() || r.description;
+
+          const errs = validateRow(updated);
+          if (errs.length > 0) { Swal.showValidationMessage(errs.join(' | ')); return false; }
+          return updated;
+        }
+      }).then((result) => {
+        if (result.isConfirmed && result.value) {
+          if (isEdit) rows[idx] = result.value;
+          else rows.push(result.value);
+          if (rows.length > importLimit) {
+            App.toast(`เกินจำนวนสูงสุด ${importLimit} รายการ ระบบตัดรายการส่วนเกินออก`, 'warning');
+            rows = rows.slice(0, importLimit);
+          }
+          renderPreview();
+        }
+      });
+    };
+
+    /* -------- Register -------- */
+    async function doRegister() {
+      const hasErrors = rows.some((r) => validateRow(r).length > 0);
+      if (hasErrors) return Swal.fire({ icon: 'warning', title: 'มีรายการที่ข้อมูลไม่ครบ', text: 'กรุณาแก้ไขรายการที่แสดงเครื่องหมาย ⚠ ให้ครบก่อนลงทะเบียน', confirmButtonColor: '#9F7AEA' });
+
+      // Preview ก่อนยืนยัน
+      const previewHtml = `
+        <p class="text-sm mb-2">จำนวน <strong>${rows.length}</strong> รายการ ยอดรวม <strong>${App.money(rows.reduce((s, r) => s + Number(r.amount), 0))}</strong> บาท</p>
+        <p class="text-xs text-[var(--color-text-muted)]">เมื่อยืนยันแล้วระบบจะสร้างเลขที่ลงทะเบียนให้อัตโนมัติ</p>`;
+      const confirm = await Swal.fire({
+        title: 'ยืนยันการลงทะเบียน', html: previewHtml, icon: 'question',
+        showCancelButton: true, confirmButtonText: 'ยืนยัน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA'
+      });
+      if (!confirm.isConfirmed) return;
+
+      App.showLoading('กำลังลงทะเบียน...');
+      try {
+        const payload = rows.map((r) => ({
+          money_type: r.money_type, dept: r.dept, sender: r.sender,
+          reserve_no: r.reserve_no, reserve_amount: r.reserve_amount,
+          egp_no: r.egp_no, invoice: r.invoice, vendor: r.vendor,
+          amount: r.amount, description: r.description,
+          request_no_display: r.request_no_display, dk_no_display: r.dk_no_display,
+          source: r.source
+        }));
+        const res = await api.post('/api/register/import', { rows: payload });
+        App.closeLoading();
+
+        // แสดงเลขทะเบียนที่ได้
+        await Swal.fire({
+          icon: 'success', title: 'ลงทะเบียนสำเร็จ',
+          html: `<p class="font-bold text-lg" style="color:var(--color-primary)">${res.register_no_display}</p>
+                 <p class="text-sm mt-1">บันทึก ${res.total} รายการ (สร้างใหม่ ${res.created} · อัปเดต ${res.updated})</p>`,
+          confirmButtonText: 'พิมพ์ใบลงทะเบียน', showCancelButton: true, cancelButtonText: 'ปิด', confirmButtonColor: '#9F7AEA'
+        }).then((r2) => {
+          if (r2.isConfirmed) printSlip(res.register_no_display, payload);
+        });
+
+        rows = [];
+        renderPreview();
+      } catch (err) {
+        App.closeLoading();
+        App.errorAlert(err);
+      }
+    }
+
+    /* -------- Print Slip -------- */
+    function printSlip(regNo, items) {
+      const user = App.getUser();
+      document.getElementById('printRegNo').textContent = regNo;
+      document.getElementById('printSender').textContent = user?.username || '-';
+      document.getElementById('printDept').textContent = user?.dept || '-';
+      document.getElementById('printDate').textContent = App.thaiDate(new Date().toISOString());
+      document.getElementById('printBody').innerHTML = items.map((r) => `
+        <tr>
+          <td style="border:1px solid #ccc;padding:5px">${App.thaiDate(new Date().toISOString())}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.money_type}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.request_no_display}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.vendor}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.description}</td>
+          <td style="border:1px solid #ccc;padding:5px;text-align:right">${App.money(r.amount)}</td>
+        </tr>`).join('');
+      const total = items.reduce((s, r) => s + Number(r.amount), 0);
+      document.getElementById('printFoot').innerHTML = `
+        <tr>
+          <td colspan="5" style="border:1px solid #ccc;padding:5px;text-align:right;font-weight:600">รวมทั้งสิ้น</td>
+          <td style="border:1px solid #ccc;padding:5px;text-align:right;font-weight:700">${App.money(total)}</td>
+        </tr>`;
+      document.getElementById('printArea').classList.remove('hidden');
+      window.print();
+      document.getElementById('printArea').classList.add('hidden');
+    }
+
+    /* -------- Print existing WAITING slip -------- */
+    async function openPrintSlipModal() {
+      App.showLoading('กำลังโหลดรายการรอเอกสาร...');
+      let waitingRows = [];
+      try {
+        const res = await api.get('/api/register/receive/pending');
+        waitingRows = res.data.filter((r) => r.dept === (currentUser.dept || ''));
+        App.closeLoading();
+      } catch (err) { App.closeLoading(); App.errorAlert(err); return; }
+
+      if (waitingRows.length === 0) return App.toast('ไม่มีรายการ "รอเอกสาร" ของหน่วยงานคุณ', 'info');
+
+      const checkboxHtml = waitingRows.slice(0, 20).map((r) => `
+        <label class="flex items-start gap-2 text-sm p-2 rounded hover:bg-[var(--color-primary-soft)] cursor-pointer">
+          <input type="checkbox" class="slip-cb mt-0.5" value="${r.uuid}" data-row='${JSON.stringify(r)}'>
+          <span>${r.request_no_display} · ${r.vendor} · ${App.money(r.amount)}</span>
+        </label>`).join('');
+
+      const res = await Swal.fire({
+        title: 'เลือกรายการพิมพ์ใบลงทะเบียน',
+        html: `<div class="text-left max-h-64 overflow-y-auto space-y-1">${checkboxHtml}</div>`,
+        showCancelButton: true, confirmButtonText: 'พิมพ์', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA',
+        preConfirm: () => {
+          const selected = [...document.querySelectorAll('.slip-cb:checked')].map((cb) => JSON.parse(cb.dataset.row));
+          if (selected.length === 0) { Swal.showValidationMessage('กรุณาเลือกอย่างน้อย 1 รายการ'); return false; }
+          return selected;
+        }
+      });
+      if (res.isConfirmed) printSlip('(พิมพ์ซ้ำ)', res.value);
+    }
+  </script>
+</body>
+</html>
