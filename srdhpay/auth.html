@@ -25,7 +25,7 @@
       <!-- Tabs -->
       <div class="flex gap-2 border-b border-[var(--color-border)]">
         <button id="tabProfile" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent">ข้อมูลส่วนตัว</button>
-        <button id="tabManage" data-menu="auth_manage" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent">จัดการผู้ใช้</button>
+        <button id="tabManage" class="tab-btn px-4 py-2.5 text-sm font-medium border-b-2 border-transparent hidden">จัดการผู้ใช้</button>
       </div>
 
       <!-- ===== ข้อมูลส่วนตัว ===== -->
@@ -101,6 +101,11 @@
       currentUser = App.getUser();
       bindTabs();
 
+      // แสดงแท็บ "จัดการผู้ใช้" เฉพาะ admin และ manager เท่านั้น
+      if (['admin', 'manager'].includes(currentUser?.role)) {
+        document.getElementById('tabManage').classList.remove('hidden');
+      }
+
       if (currentUser.isGuest) {
         document.getElementById('panelProfile').innerHTML = `<p class="text-sm text-[var(--color-text-muted)]">ผู้เยี่ยมชมไม่มีข้อมูลส่วนตัว</p>`;
         return;
@@ -133,6 +138,9 @@
       switchTab('profile');
     }
     function switchTab(tab) {
+      // ป้องกัน role ที่ไม่มีสิทธิ์เปิดแท็บจัดการผู้ใช้
+      if (tab === 'manage' && !['admin', 'manager'].includes(currentUser?.role)) return;
+
       document.getElementById('panelProfile').classList.toggle('hidden', tab !== 'profile');
       document.getElementById('panelManage').classList.toggle('hidden', tab !== 'manage');
       document.getElementById('tabProfile').style.borderColor = tab === 'profile' ? 'var(--color-primary)' : 'transparent';
