@@ -404,8 +404,8 @@
       let mOptions = '', vOptions = '', dOptions = '', edOptions = '';
       try {
         const [mt, ve, dp, ed] = await Promise.all([
-          api.get('/api/settings/money-types'), api.get('/api/settings/vendors'),
-          api.get('/api/settings/depts'), api.get('/api/settings/editors')
+          api.get('/api/settings/money-types', { all: '1' }), api.get('/api/settings/vendors', { all: '1' }),
+          api.get('/api/settings/depts', { all: '1' }), api.get('/api/settings/editors')
         ]);
         mOptions = mt.data.map((m) => `<option value="${m.name}" ${m.name === r.money_type ? 'selected' : ''}>${m.name}</option>`).join('');
         vOptions = ve.data.map((v) => `<option value="${v.name}" ${v.name === r.vendor ? 'selected' : ''}>${v.name}</option>`).join('');
