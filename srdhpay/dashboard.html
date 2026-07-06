@@ -83,7 +83,7 @@
     async function init() {
       try {
         const [moneyTypesRes, summaryRes] = await Promise.all([
-          api.get('/api/settings/money-types'),
+          api.get('/api/settings/money-types', { all: '1' }),
           api.get('/api/dashboard/summary')
         ]);
         moneyTypesRes.data.forEach((m) => { moneyTypeColorMap[m.name] = m.color; });
