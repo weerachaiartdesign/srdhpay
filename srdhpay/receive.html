@@ -118,8 +118,8 @@
     async function init() {
       try {
         const [mtRes, dRes] = await Promise.all([
-          api.get('/api/settings/money-types'),
-          api.get('/api/settings/depts')
+          api.get('/api/settings/money-types', { all: '1' }),
+          api.get('/api/settings/depts', { all: '1' })
         ]);
         fillSelect('sMoneyType', mtRes.data, 'ประเภทเงิน: ทั้งหมด');
         fillSelect('sDept', dRes.data, 'หน่วยงาน: ทั้งหมด');
