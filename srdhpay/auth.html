@@ -125,7 +125,7 @@
 
       if (['admin', 'manager'].includes(currentUser.role)) {
         try {
-          const dRes = await api.get('/api/settings/depts');
+          const dRes = await api.get('/api/settings/depts', { all: '1' });
           depts = dRes.data.filter((d) => d.active);
         } catch { /* ignore */ }
         bindManageEvents();
