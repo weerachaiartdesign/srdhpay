@@ -17,30 +17,362 @@
     <div id="sidebar-placeholder"></div>
 
     <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
-      <div>
-        <h2 class="font-display font-bold text-xl">รายงาน</h2>
-        <p class="text-sm text-[var(--color-text-muted)]">รายงานการเบิกจ่ายเงิน</p>
+      
+      <!-- ============================================================
+           VIEW 1: หน้าหลักเมนูรายงาน (REPORT DASHBOARD MENU)
+           ============================================================ -->
+      <div id="view-menu" class="space-y-4">
+        <div>
+          <h2 class="font-display font-bold text-xl">รายงาน</h2>
+          <p class="text-sm text-[var(--color-text-muted)]">รายงานการเบิกจ่ายเงิน</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+          <!-- ลิงก์สลับเพื่อเปิดหน้า รายงานการเบิกจ่ายแยกตามประเภทเงิน -->
+          <button onclick="showView('type')" class="card p-6 text-left hover:shadow-lg transition group block w-full bg-[var(--color-surface)]">
+            <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14"/>
+            </svg>
+            <h3 class="font-display font-semibold mb-1 group-hover:underline text-[var(--color-text)]">รายงานการเบิกจ่าย</h3>
+            <p class="text-sm text-[var(--color-text-muted)]">สรุปยอดเบิกจ่ายแยกตามประเภทเงินและหน่วยงาน</p>
+          </button>
+
+          <!-- ลิงก์สลับเพื่อเปิดหน้า รายงานสถานะฎีกา -->
+          <button onclick="showView('status')" class="card p-6 text-left hover:shadow-lg transition group block w-full bg-[var(--color-surface)]">
+            <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="font-display font-semibold mb-1 group-hover:underline text-[var(--color-text)]">รายงานสถานะฎีกา</h3>
+            <p class="text-sm text-[var(--color-text-muted)]">ค้นหารายการตามสถานะและช่วงวันที่</p>
+          </button>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        <a href="report_type.html" class="card p-6 hover:shadow-lg transition group">
-          <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14"/></svg>
-          <h3 class="font-display font-semibold mb-1 group-hover:underline">รายงานการเบิกจ่าย</h3>
-          <p class="text-sm text-[var(--color-text-muted)]">สรุปยอดเบิกจ่ายแยกตามประเภทเงินและหน่วยงาน</p>
-        </a>
-        <a href="report_status.html" class="card p-6 hover:shadow-lg transition group">
-          <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <h3 class="font-display font-semibold mb-1 group-hover:underline">รายงานสถานะฎีกา</h3>
-          <p class="text-sm text-[var(--color-text-muted)]">ค้นหารายการตามสถานะและช่วงวันที่</p>
-        </a>
+      <!-- ============================================================
+           VIEW 2: รายงานการเบิกจ่ายแยกตาประเภทเงิน (REPORT BY TYPE)
+           ============================================================ -->
+      <div id="view-type" class="hidden space-y-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <button onclick="showView('menu')" class="flex items-center gap-1.5 text-xs text-[var(--color-primary-dark)] hover:underline mb-1.5 font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              ย้อนกลับหน้าเมนูหลัก
+            </button>
+            <h2 class="font-display font-bold text-xl">รายงานการเบิกจ่าย</h2>
+            <p class="text-sm text-[var(--color-text-muted)]" id="generatedAt">ข้อมูล ณ วันที่ปัจจุบัน</p>
+          </div>
+          <button id="btnPrintType" class="btn btn-outline">พิมพ์</button>
+        </div>
+
+        <div id="reportContainer" class="space-y-5">
+          <!-- Loading skeleton -->
+          <div class="skeleton h-40 rounded-xl"></div>
+          <div class="skeleton h-40 rounded-xl"></div>
+        </div>
       </div>
+
+      <!-- ============================================================
+           VIEW 3: รายงานสถานะฎีกา (REPORT BY STATUS)
+           ============================================================ -->
+      <div id="view-status" class="hidden space-y-4">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <button onclick="showView('menu')" class="flex items-center gap-1.5 text-xs text-[var(--color-primary-dark)] hover:underline mb-1.5 font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              ย้อนกลับหน้าเมนูหลัก
+            </button>
+            <h2 class="font-display font-bold text-xl">รายงานสถานะฎีกา</h2>
+            <p class="text-sm text-[var(--color-text-muted)]">ค้นหารายการตามสถานะและช่วงวันที่</p>
+          </div>
+        </div>
+
+        <div class="card p-4 space-y-3 bg-[var(--color-surface)]">
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-outline mode-btn" data-mode="received">ฎีการับเข้าระบบ</button>
+            <button class="btn btn-outline mode-btn" data-mode="editing">ฎีกาส่งแก้ไข</button>
+            <button class="btn btn-outline mode-btn" data-mode="proposed">รออนุมัติ</button>
+            <div class="flex-1"></div>
+            <button id="btnPrintStatus" class="btn btn-outline">พิมพ์</button>
+          </div>
+          <div class="flex flex-wrap items-end gap-2">
+            <div>
+              <label class="block text-xs mb-1 text-[var(--color-text-muted)]">วันที่เริ่มต้น</label>
+              <input type="date" id="startDate" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+            </div>
+            <div>
+              <label class="block text-xs mb-1 text-[var(--color-text-muted)]">วันที่สิ้นสุด</label>
+              <input type="date" id="endDate" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+            </div>
+            <button id="btnSearchStatus" class="btn btn-primary">ค้นหา</button>
+          </div>
+          <span id="modeLabel" class="text-xs text-[var(--color-text-muted)] block">เลือกประเภทรายงานและช่วงวันที่ แล้วกดค้นหา</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>วันที่รับเข้าระบบ</th><th>เลขที่ใบขอเบิก</th><th>เลขที่ฎีกา</th>
+                <th>ชื่อเจ้าหนี้/บริษัท</th><th>รายการ</th><th class="text-right">จำนวนเงินขอเบิก</th>
+                <th>หน่วยงาน</th><th>ผู้ส่งเอกสาร</th>
+              </tr>
+            </thead>
+            <tbody id="tableBodyStatus">
+              <tr><td colspan="8" class="text-center py-12 text-[var(--color-text-muted)]">เลือกประเภทรายงาน เลือกช่วงวันที่ แล้วกดค้นหา</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="mobileCardsStatus" class="mobile-cards"></div>
+      </div>
+
     </main>
   </div>
 
+  <!-- Shared Print Area (ใช้พจนานุกรมการปริ้นร่วมกัน) -->
+  <div id="printArea" class="hidden p-8 bg-white text-black"></div>
+
+  <!-- นำสคริปต์กลางของระบบเข้ามาใช้งาน -->
   <script src="assets/js/api.js"></script>
   <script src="assets/js/app.js"></script>
+  
   <script>
-    if (App.requireLogin()) App.loadComponents();
+    // ตรวจสอบเช็คสิทธิ์ผู้ใช้ก่อนโหลดคอมโพเนนต์
+    if (App.requireLogin()) { 
+      App.loadComponents(); 
+    }
+
+    // ============================================================
+    // SYSTEM NAVIGATION MANAGER (การเปลึ่ยนหน้าย่อย / วิว)
+    // ============================================================
+    function showView(viewName) {
+      document.getElementById('view-menu').classList.add('hidden');
+      document.getElementById('view-type').classList.add('hidden');
+      document.getElementById('view-status').classList.add('hidden');
+
+      if (viewName === 'menu') {
+        document.getElementById('view-menu').classList.remove('hidden');
+      } else if (viewName === 'type') {
+        document.getElementById('view-type').classList.remove('hidden');
+        initTypeReport();
+      } else if (viewName === 'status') {
+        document.getElementById('view-status').classList.remove('hidden');
+        initStatusReport();
+      }
+    }
+
+
+    // ============================================================
+    // MODULE: REPORT BY TYPE (ฟังก์ชันของ รายงานการเบิกจ่ายยอดเงิน)
+    // ============================================================
+    async function initTypeReport() {
+      document.getElementById('generatedAt').textContent = `ข้อมูล ณ วันที่ ${App.thaiDate(new Date().toISOString())}`;
+      document.getElementById('reportContainer').innerHTML = `
+        <div class="skeleton h-40 rounded-xl mb-4"></div>
+        <div class="skeleton h-40 rounded-xl"></div>
+      `;
+      try {
+        const res = await api.get('/api/report/by-type');
+        renderTypeReport(res.data);
+      } catch (err) { 
+        App.errorAlert(err); 
+      }
+    }
+
+    function buildTableHtml(money_type, depts) {
+      let totalReceived = 0, totalPaid = 0, totalRemaining = 0, totalRequested = 0, totalPaidAmt = 0, totalRemainingAmt = 0;
+      
+      const rowsHtml = depts.map((d) => {
+        totalReceived += d.received_count; 
+        totalPaid += d.paid_count; 
+        totalRemaining += d.remaining_count;
+        totalRequested += d.requested_amount; 
+        totalPaidAmt += d.paid_amount; 
+        totalRemainingAmt += d.remaining_amount;
+        return `
+          <tr>
+            <td>${d.dept}</td>
+            <td class="text-right">${d.received_count.toLocaleString()}</td>
+            <td class="text-right">${d.paid_count.toLocaleString()}</td>
+            <td class="text-right">${d.remaining_count.toLocaleString()}</td>
+            <td class="text-right">${App.money(d.requested_amount)}</td>
+            <td class="text-right">${App.money(d.paid_amount)}</td>
+            <td class="text-right">${App.money(d.remaining_amount)}</td>
+          </tr>`;
+      }).join('');
+
+      const footHtml = `
+        <tr class="font-semibold" style="background:var(--color-primary-soft)">
+          <td>รวม</td>
+          <td class="text-right">${totalReceived.toLocaleString()}</td>
+          <td class="text-right">${totalPaid.toLocaleString()}</td>
+          <td class="text-right">${totalRemaining.toLocaleString()}</td>
+          <td class="text-right">${App.money(totalRequested)}</td>
+          <td class="text-right">${App.money(totalPaidAmt)}</td>
+          <td class="text-right">${App.money(totalRemainingAmt)}</td>
+        </tr>`;
+
+      return `
+        <div class="card p-4 report-block bg-[var(--color-surface)]">
+          <h3 class="font-display font-semibold mb-3">${money_type} <span class="text-xs font-normal text-[var(--color-text-muted)]">ข้อมูล ณ วันที่ปัจจุบัน</span></h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr>
+                <th>หน่วยงาน</th><th class="text-right">ฎีกาที่รับเข้าระบบ</th><th class="text-right">ฎีกาจ่ายแล้ว</th><th class="text-right">ฎีกาคงเหลือ</th>
+                <th class="text-right">จำนวนเงินขอเบิกทั้งสิ้น</th><th class="text-right">จำนวนเงินที่จ่ายแล้ว</th><th class="text-right">จำนวนเงินคงเหลือยังไม่จ่าย</th>
+              </tr></thead>
+              <tbody>${rowsHtml || `<tr><td colspan="7" class="text-center py-6 text-[var(--color-text-muted)]">ไม่มีข้อมูล</td></tr>`}</tbody>
+              ${depts.length > 0 ? `<tfoot>${footHtml}</tfoot>` : ''}
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function renderTypeReport(data) {
+      document.getElementById('reportContainer').innerHTML = data.map((d) => buildTableHtml(d.money_type, d.depts)).join('');
+    }
+
+    // จัดการการสั่งพิมพ์รายงานประเภทเงิน
+    document.getElementById('btnPrintType').addEventListener('click', () => {
+      document.getElementById('printArea').innerHTML =
+        `<h2 style="font-weight:700;font-size:18px;margin-bottom:12px">รายงานการเบิกจ่าย — ${document.getElementById('generatedAt').textContent}</h2>` +
+        document.getElementById('reportContainer').innerHTML;
+      document.getElementById('printArea').classList.remove('hidden');
+      window.print();
+      document.getElementById('printArea').classList.add('hidden');
+    });
+
+
+    // ============================================================
+    // MODULE: REPORT BY STATUS (ฟังก์ชันของ รายงานสถานะฎีกา)
+    // ============================================================
+    let statusMode = 'received';
+    let statusData = [];
+    let isStatusInitialized = false; // ตัวควบคุมป้องกันการผูก Event Listener ซ้ำซ้อน
+    const STATUS_MODE_LABEL = { received: 'ฎีการับเข้าระบบ', editing: 'ฎีกาส่งแก้ไข', proposed: 'รออนุมัติ' };
+
+    function initStatusReport() {
+      if (isStatusInitialized) return;
+
+      // ตั้งค่าเริ่มต้นของวันที่ย้อนหลัง 30 วันจนถึงวันปัจจุบัน
+      const today = new Date().toISOString().slice(0, 10);
+      const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+      document.getElementById('startDate').value = monthAgo;
+      document.getElementById('endDate').value = today;
+
+      // ผูก Event Listener ให้กับปุ่มและระบบควบคุมคิวรี่
+      document.querySelectorAll('.mode-btn').forEach((btn) => {
+        btn.addEventListener('click', () => setStatusMode(btn.dataset.mode));
+      });
+      document.getElementById('btnSearchStatus').addEventListener('click', loadStatusData);
+      document.getElementById('btnPrintStatus').addEventListener('click', doStatusPrint);
+
+      setStatusMode('received');
+      isStatusInitialized = true;
+    }
+
+    function setStatusMode(m) {
+      statusMode = m;
+      document.querySelectorAll('.mode-btn').forEach((b) => {
+        b.classList.toggle('btn-primary', b.dataset.mode === m);
+        b.classList.toggle('btn-outline', b.dataset.mode !== m);
+      });
+    }
+
+    async function loadStatusData() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      if (!startDate || !endDate) return App.toast('กรุณาเลือกช่วงวันที่', 'warning');
+
+      document.getElementById('tableBodyStatus').innerHTML = `
+        <tr><td colspan="8"><div class="skeleton h-6 my-1 rounded-md"></div></td></tr>
+      `.repeat(4);
+      
+      try {
+        const res = await api.get('/api/report/status', { action: statusMode, start_date: startDate, end_date: endDate });
+        statusData = res.data;
+        document.getElementById('modeLabel').textContent = `${STATUS_MODE_LABEL[statusMode]}: พบ ${res.data.length} รายการ`;
+        renderStatusTable(); 
+        renderStatusCards();
+      } catch (err) { 
+        App.errorAlert(err); 
+      }
+    }
+
+    function renderStatusTable() {
+      const tbody = document.getElementById('tableBodyStatus');
+      if (statusData.length === 0) { 
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-[var(--color-text-muted)]">ไม่พบรายการ</td></tr>`; 
+        return; 
+      }
+      tbody.innerHTML = statusData.map((r) => `
+        <tr>
+          <td>${App.thaiDate(r.receive_date)}</td>
+          <td>${App.emptyDash(r.request_no_display)}</td>
+          <td>${App.emptyDash(r.dk_no_display)}</td>
+          <td class="font-semibold">${r.vendor}</td>
+          <td class="max-w-xs truncate" title="${r.description}">${r.description}</td>
+          <td class="text-right font-display font-semibold">${App.money(r.amount)}</td>
+          <td>${r.dept}</td>
+          <td>${App.emptyDash(r.sender)}</td>
+        </tr>`).join('');
+    }
+
+    function renderStatusCards() {
+      const wrap = document.getElementById('mobileCardsStatus');
+      if (statusData.length === 0) { 
+        wrap.innerHTML = ''; 
+        return; 
+      }
+      wrap.innerHTML = statusData.map((r) => `
+        <div class="mobile-item-card bg-[var(--color-surface)]">
+          <div class="flex justify-between mb-1">
+            <span class="font-semibold text-sm text-[var(--color-text)]">${r.vendor}</span>
+            <span class="font-display font-semibold text-sm text-[var(--color-text)]">${App.money(r.amount)}</span>
+          </div>
+          <p class="text-xs text-[var(--color-text-muted)] mb-1">${r.description}</p>
+          <div class="text-xs text-[var(--color-text-muted)]">${r.dept} · ${App.emptyDash(r.sender)}</div>
+          <div class="text-xs text-[var(--color-text-muted)]">รับ ${App.thaiDate(r.receive_date)} · ใบขอเบิก ${App.emptyDash(r.request_no_display)} · ฎีกา ${App.emptyDash(r.dk_no_display)}</div>
+        </div>`).join('');
+    }
+
+    function doStatusPrint() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      if (statusData.length === 0) return App.toast('ไม่มีข้อมูลที่จะพิมพ์ กรุณากดค้นหาก่อนพิมพ์', 'warning');
+
+      document.getElementById('printArea').innerHTML = `
+        <h2 style="font-weight:700;font-size:18px;margin-bottom:4px;color:#000;">${STATUS_MODE_LABEL[statusMode]}</h2>
+        <p style="font-size:12px;margin-bottom:12px;color:#666">ช่วงวันที่ ${App.thaiDate(startDate)} - ${App.thaiDate(endDate)}</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;color:#000;">
+          <thead>
+            <tr style="background:#EDE6FB">
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">วันที่รับเข้าระบบ</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">เลขที่ใบขอเบิก</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">เลขที่ฎีกา</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">ชื่อเจ้าหนี้/บริษัท</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">รายการ</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:right">จำนวนเงิน</th>
+              <th style="border:1px solid #ccc;padding:6px;text-align:left">หน่วยงาน</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${statusData.map((r) => `
+              <tr>
+                <td style="border:1px solid #ccc;padding:5px">${App.thaiDate(r.receive_date)}</td>
+                <td style="border:1px solid #ccc;padding:5px">${App.emptyDash(r.request_no_display)}</td>
+                <td style="border:1px solid #ccc;padding:5px">${App.emptyDash(r.dk_no_display)}</td>
+                <td style="border:1px solid #ccc;padding:5px">${r.vendor}</td>
+                <td style="border:1px solid #ccc;padding:5px">${r.description}</td>
+                <td style="border:1px solid #ccc;padding:5px;text-align:right">${App.money(r.amount)}</td>
+                <td style="border:1px solid #ccc;padding:5px">${r.dept}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+        
+      document.getElementById('printArea').classList.remove('hidden');
+      window.print();
+      document.getElementById('printArea').classList.add('hidden');
+    }
   </script>
 </body>
 </html>
