@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>บันทึกการตรวจสอบ - SRDH PAY</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="min-h-screen">
+  <div id="header-placeholder"></div>
+  <div class="flex">
+    <div id="sidebar-placeholder"></div>
+    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
+
+      <div>
+        <h2 class="font-display font-bold text-xl">บันทึกการตรวจสอบ</h2>
+        <p class="text-sm text-[var(--color-text-muted)]">บันทึกการตรวจสอบ การแก้ไข และรับคืน</p>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="card p-4 space-y-3">
+        <div class="flex flex-wrap gap-2">
+          <button id="btnViewEdit"   class="btn btn-primary">แก้ไข (ส่งแก้ไข)</button>
+          <button id="btnViewReturn" class="btn btn-outline">รับคืน</button>
+          <button id="btnViewPass"   class="btn btn-outline">ตรวจผ่าน</button>
+          <div class="w-px bg-[var(--color-border)] hidden sm:block"></div>
+          <button id="btnDoAction"   class="btn btn-soft" disabled>บันทึก</button>
+          <button id="btnPrintEdit"  class="btn btn-outline">พิมพ์ใบส่งแก้ไข</button>
+        </div>
+
+        <!-- ค้นหา 5 ช่อง -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          <select id="sStatus"    class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm"><option value="">สถานะ: ทั้งหมด</option><option value="CHECKUP">ตรวจสอบ</option><option value="EDITING">ส่งแก้ไข</option><option value="PASSED">ตรวจผ่าน</option></select>
+          <select id="sMoneyType" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm"><option value="">ประเภทเงิน: ทั้งหมด</option></select>
+          <select id="sDept"      class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm"><option value="">หน่วยงาน: ทั้งหมด</option></select>
+          <input type="text" id="sSender" placeholder="ผู้ส่งเอกสาร" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:var(--color-primary)">
+          <input type="text" id="sVendor" placeholder="ชื่อเจ้าหนี้/บริษัท" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm focus:outline-none focus:ring-2" style="--tw-ring-color:var(--color-primary)">
+        </div>
+        <div class="flex gap-2 items-center">
+          <button id="btnClear" class="btn btn-outline text-sm">ล้างค่า</button>
+          <span id="modeLabel" class="text-xs text-[var(--color-text-muted)]"></span>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap desktop-table">
+        <table class="data-table">
+          <thead><tr>
+            <th><input type="checkbox" id="chkAll" class="rounded"></th>
+            <th>สถานะ</th><th>เลขที่ลงทะเบียน/วันที่</th><th>เลขที่รับ/วันที่รับ</th>
+            <th>ใบขอเบิก/ฎีกา</th><th>ประเภทเงิน/หน่วยงาน</th><th>ผู้ส่ง/ผู้ตรวจ</th>
+            <th>เจ้าหนี้/รายการ</th><th class="text-right">จำนวนเงิน</th>
+          </tr></thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9" class="text-center py-12 text-[var(--color-text-muted)]">กดปุ่มด้านบนเพื่อโหลดข้อมูล</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="mobileCards" class="mobile-cards"></div>
+
+      <!-- Print Area: ใบส่งแก้ไข -->
+      <div id="printArea" class="hidden p-8 text-sm">
+        <div class="text-center font-bold text-base mb-1">ใบส่งแก้ไข</div>
+        <div class="flex justify-between mb-4 text-xs">
+          <span>วันที่ส่ง: <span id="pEditDate"></span></span>
+          <span>วันที่พิมพ์: <span id="pPrintDate"></span></span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#EDE6FB">
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">เลขที่ลงทะเบียน</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">วันที่ลงทะเบียน</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">วันที่รับเข้าระบบ</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">ประเภทเงิน</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">เลขที่ใบขอเบิก</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">ชื่อเจ้าหนี้/บริษัท</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:left">รายการ</th>
+            <th style="border:1px solid #ccc;padding:6px;text-align:right">จำนวนเงิน</th>
+          </tr></thead>
+          <tbody id="printBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (App.requireLogin()) { App.loadComponents(); init(); }
+
+    // mode: 'edit' | 'return' | 'pass'
+    let mode = '', tableData = [], selectedUuids = new Set();
+
+    const MODE_CONFIG = {
+      edit:   { label: 'ส่งแก้ไข',  action: 'edit',   btnText: 'บันทึกส่งแก้ไข' },
+      return: { label: 'รับคืน',    action: 'return', btnText: 'บันทึกรับคืน' },
+      pass:   { label: 'ตรวจผ่าน', action: 'pass',   btnText: 'บันทึกตรวจผ่าน' }
+    };
+
+    async function init() {
+      try {
+        const [mt, dpts] = await Promise.all([api.get('/api/settings/money-types', { all: '1' }), api.get('/api/settings/depts', { all: '1' })]);
+        fillSelect('sMoneyType', mt.data, 'ประเภทเงิน: ทั้งหมด');
+        fillSelect('sDept', dpts.data, 'หน่วยงาน: ทั้งหมด');
+      } catch (err) { App.errorAlert(err); }
+      bindEvents();
+    }
+
+    function fillSelect(id, items, all) {
+      document.getElementById(id).innerHTML = `<option value="">${all}</option>` +
+        items.map((i) => `<option value="${i.name}">${i.name}</option>`).join('');
+    }
+
+    function bindEvents() {
+      ['btnViewEdit','btnViewReturn','btnViewPass'].forEach((id) => {
+        const m = id.replace('btnView','').toLowerCase();
+        document.getElementById(id).addEventListener('click', () => setMode(m));
+      });
+      document.getElementById('btnDoAction').addEventListener('click', doAction);
+      document.getElementById('btnPrintEdit').addEventListener('click', doPrintEdit);
+      document.getElementById('btnClear').addEventListener('click', () => {
+        ['sStatus','sMoneyType','sDept'].forEach((id) => { document.getElementById(id).value = ''; });
+        ['sSender','sVendor'].forEach((id) => { document.getElementById(id).value = ''; });
+        if (mode) loadData();
+      });
+      document.getElementById('chkAll').addEventListener('change', (e) => {
+        document.querySelectorAll('.row-cb').forEach((cb) => {
+          cb.checked = e.target.checked;
+          e.target.checked ? selectedUuids.add(cb.value) : selectedUuids.delete(cb.value);
+        });
+        refreshActionBtn();
+      });
+    }
+
+    function setMode(m) {
+      mode = m;
+      selectedUuids = new Set();
+      document.getElementById('chkAll').checked = false;
+      ['btnViewEdit','btnViewReturn','btnViewPass'].forEach((id) => {
+        const isActive = id === `btnView${m.charAt(0).toUpperCase()+m.slice(1)}`;
+        document.getElementById(id).className = isActive ? 'btn btn-primary' : 'btn btn-outline';
+      });
+      document.getElementById('btnDoAction').textContent = MODE_CONFIG[m].btnText;
+      loadData();
+    }
+
+    function getSearchParams() {
+      return {
+        action: mode,
+        money_type: document.getElementById('sMoneyType').value,
+        dept: document.getElementById('sDept').value,
+        sender: document.getElementById('sSender').value.trim(),
+        vendor: document.getElementById('sVendor').value.trim()
+      };
+    }
+
+    async function loadData() {
+      setBodyLoading(9);
+      try {
+        const res = await api.get('/api/verify/list', getSearchParams());
+        tableData = res.data;
+        document.getElementById('modeLabel').textContent = `แสดง ${tableData.length} รายการ`;
+        renderTable(); renderMobileCards();
+      } catch (err) { App.errorAlert(err); }
+    }
+
+    function setBodyLoading(cols) {
+      document.getElementById('tableBody').innerHTML =
+        `<tr><td colspan="${cols}"><div class="skeleton h-6 my-1"></div></td></tr>`.repeat(4);
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      if (!tableData.length) { tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-[var(--color-text-muted)]">ไม่พบรายการ</td></tr>`; return; }
+      tbody.innerHTML = tableData.map((r) => `
+        <tr>
+          <td><input type="checkbox" class="row-cb rounded" value="${r.uuid}" ${selectedUuids.has(r.uuid)?'checked':''}></td>
+          <td>${App.statusBadge(r.status)}</td>
+          <td><div class="text-xs font-medium">${App.emptyDash(r.register_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.thaiDate(r.register_date)}</div></td>
+          <td><div class="text-xs">${App.emptyDash(r.receive_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.thaiDate(r.receive_date)}</div></td>
+          <td><div class="text-xs">${App.emptyDash(r.request_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.emptyDash(r.dk_no_display)}</div></td>
+          <td><div class="text-xs">${r.money_type}</div><div class="text-xs text-[var(--color-text-muted)]">${r.dept}</div></td>
+          <td><div class="text-xs">${App.emptyDash(r.sender)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.emptyDash(r.editor_display||r.editor)}</div></td>
+          <td><div class="font-semibold text-xs">${r.vendor}</div><div class="text-xs text-[var(--color-text-muted)] max-w-xs truncate">${r.description}</div></td>
+          <td class="text-right font-display font-semibold text-sm whitespace-nowrap">${App.money(r.amount)}</td>
+        </tr>`).join('');
+      document.querySelectorAll('.row-cb').forEach((cb) => {
+        cb.addEventListener('change', (e) => {
+          e.target.checked ? selectedUuids.add(e.target.value) : selectedUuids.delete(e.target.value);
+          document.getElementById('chkAll').checked = selectedUuids.size === tableData.length;
+          refreshActionBtn();
+        });
+      });
+    }
+
+    function renderMobileCards() {
+      const wrap = document.getElementById('mobileCards');
+      wrap.innerHTML = tableData.map((r) => `
+        <div class="mobile-item-card">
+          <div class="flex justify-between items-start mb-1">
+            <span class="font-semibold text-sm">${r.vendor}</span>${App.statusBadge(r.status)}
+          </div>
+          <p class="text-xs text-[var(--color-text-muted)] mb-1">${r.description}</p>
+          <div class="text-xs flex justify-between">
+            <span>${r.money_type}</span><span class="font-semibold">${App.money(r.amount)}</span>
+          </div>
+          <label class="flex items-center gap-2 mt-2 text-xs">
+            <input type="checkbox" class="row-cb-m rounded" value="${r.uuid}" ${selectedUuids.has(r.uuid)?'checked':''}>เลือก
+          </label>
+        </div>`).join('');
+      document.querySelectorAll('.row-cb-m').forEach((cb) => {
+        cb.addEventListener('change', (e) => {
+          e.target.checked ? selectedUuids.add(e.target.value) : selectedUuids.delete(e.target.value);
+          refreshActionBtn();
+        });
+      });
+    }
+
+    function refreshActionBtn() {
+      document.getElementById('btnDoAction').disabled = selectedUuids.size === 0;
+    }
+
+    async function doAction() {
+      if (!mode) return;
+      const uuids = [...selectedUuids];
+      const selected = tableData.filter((r) => uuids.includes(r.uuid));
+
+      // --------- pass: บังคับกรอกเลขฎีกา ---------
+      if (mode === 'pass') {
+        const needDk = selected.filter((r) => !r.dk_no_raw && !r.dk_no_display);
+        let dkInputs = {};
+        if (needDk.length > 0) {
+          const inputsHtml = needDk.map((r) => `
+            <div class="mb-2 text-left">
+              <label class="text-xs text-[var(--color-text-muted)]">${r.vendor} · ${App.emptyDash(r.request_no_display)}</label>
+              <input type="text" class="dk-input w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm mt-0.5"
+                     data-uuid="${r.uuid}" placeholder="เลขที่ฎีกา เช่น 1801/69">
+            </div>`).join('');
+          const dkRes = await Swal.fire({
+            title: 'กรอกเลขที่ฎีกาก่อนตรวจผ่าน',
+            html: `<p class="text-sm mb-3 text-[var(--color-text-muted)]">รายการต่อไปนี้ยังไม่มีเลขที่ฎีกา กรุณากรอกให้ครบ</p>${inputsHtml}`,
+            showCancelButton: true, confirmButtonText: 'ยืนยัน',
+            cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA',
+            preConfirm: () => {
+              const result = {};
+              let valid = true;
+              document.querySelectorAll('.dk-input').forEach((inp) => {
+                const val = inp.value.trim();
+                if (!val) { Swal.showValidationMessage('กรุณากรอกเลขที่ฎีกาให้ครบทุกรายการ'); valid = false; }
+                else result[inp.dataset.uuid] = val;
+              });
+              if (!valid) return false;
+              return result;
+            }
+          });
+          if (!dkRes.isConfirmed) return;
+          dkInputs = dkRes.value;
+        }
+
+        App.showLoading('กำลังบันทึกตรวจผ่าน...');
+        try {
+          const items = uuids.map((uuid) => ({
+            uuid,
+            dk_no_display: dkInputs[uuid] || ''
+          }));
+          await api.post('/api/verify/pass', { items });
+          App.closeLoading();
+          App.toast(`บันทึกตรวจผ่าน ${uuids.length} รายการสำเร็จ`, 'success');
+          selectedUuids = new Set();
+          loadData();
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+        return;
+      }
+
+      // --------- edit / return ---------
+      const actionLabel = MODE_CONFIG[mode].label;
+      const confirm = await Swal.fire({
+        title: `ยืนยันการ${actionLabel}`,
+        html: `<p class="text-sm">${uuids.length} รายการ ยอดรวม <strong>${App.money(selected.reduce((s,r)=>s+Number(r.amount),0))}</strong> บาท</p>`,
+        icon: 'question', showCancelButton: true,
+        confirmButtonText: `บันทึก${actionLabel}`, cancelButtonText: 'ยกเลิก', confirmButtonColor: '#9F7AEA'
+      });
+      if (!confirm.isConfirmed) return;
+
+      App.showLoading(`กำลังบันทึก${actionLabel}...`);
+      try {
+        await api.post(`/api/verify/${mode}`, { uuids });
+        App.closeLoading();
+        App.toast(`บันทึก${actionLabel} ${uuids.length} รายการสำเร็จ`, 'success');
+        if (mode === 'edit') {
+          await Swal.fire({
+            icon: 'success', title: `บันทึก${actionLabel}สำเร็จ`,
+            confirmButtonText: 'พิมพ์ใบส่งแก้ไข', showCancelButton: true,
+            cancelButtonText: 'ปิด', confirmButtonColor: '#9F7AEA'
+          }).then((r2) => { if (r2.isConfirmed) printEditSlip(selected); });
+        }
+        selectedUuids = new Set();
+        loadData();
+      } catch (err) { App.closeLoading(); App.errorAlert(err); }
+    }
+
+    function printEditSlip(rows) {
+      const today = App.thaiDate(new Date().toISOString());
+      document.getElementById('pEditDate').textContent = today;
+      document.getElementById('pPrintDate').textContent = today;
+      document.getElementById('printBody').innerHTML = rows.map((r) => `
+        <tr>
+          <td style="border:1px solid #ccc;padding:5px">${App.emptyDash(r.register_no_display)}</td>
+          <td style="border:1px solid #ccc;padding:5px">${App.thaiDate(r.register_date)}</td>
+          <td style="border:1px solid #ccc;padding:5px">${App.thaiDate(r.receive_date)}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.money_type}</td>
+          <td style="border:1px solid #ccc;padding:5px">${App.emptyDash(r.request_no_display)}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.vendor}</td>
+          <td style="border:1px solid #ccc;padding:5px">${r.description}</td>
+          <td style="border:1px solid #ccc;padding:5px;text-align:right">${App.money(r.amount)}</td>
+        </tr>`).join('');
+      document.getElementById('printArea').classList.remove('hidden');
+      window.print();
+      document.getElementById('printArea').classList.add('hidden');
+    }
+
+    async function doPrintEdit() {
+      if (selectedUuids.size === 0) return App.toast('กรุณาเลือกรายการที่ต้องการพิมพ์', 'warning');
+      printEditSlip(tableData.filter((r) => selectedUuids.has(r.uuid)));
+    }
+  </script>
+</body>
+</html>
