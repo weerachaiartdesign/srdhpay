@@ -141,7 +141,7 @@ const App = {
     const sidebarHolder = document.getElementById('sidebar-placeholder');
     if (sidebarHolder) {
       // โหลดไฟล์รวมไปยัดในตัวถือครองหลัก
-      sidebarHolder.innerHTML = await (await fetch('components/sidebar.html')).text();
+      sidebarHolder.innerHTML = await (await fetch('sidebar.html')).text();
     }
     this.applyMenuPermission();
     this.highlightCurrentMenu();
