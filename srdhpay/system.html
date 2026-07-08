@@ -160,7 +160,11 @@
   <script src="assets/js/api.js"></script>
   <script src="assets/js/app.js"></script>
   <script>
-    if (App.requireLogin()) { App.loadComponents(); init(); }
+    if (App.requireLogin()) {
+      const _u = App.getUser();
+      if (_u && _u.role !== 'admin') { location.href = 'dashboard.html'; }
+      else { App.loadComponents(); init(); }
+    }
 
     const MODULE_LABEL = {
       dashboard: 'Dashboard', list: 'ทะเบียนเบิกจ่าย', import: 'นำเข้าข้อมูล',
