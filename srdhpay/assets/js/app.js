@@ -79,6 +79,12 @@ const App = {
     document.querySelectorAll('#sidebar-placeholder a[href]').forEach((a) => {
       if (a.getAttribute('href') === page) a.classList.add('bg-[var(--color-primary-soft)]', 'font-semibold');
     });
+    // ตั้ง page-title จาก <title> tag (ตัดส่วน " - SRDH PAY" ออก)
+    const titleEl = document.getElementById('page-title');
+    if (titleEl) {
+      const rawTitle = document.title || '';
+      titleEl.textContent = rawTitle.replace(/\s*-\s*SRDH PAY\s*$/i, '').trim();
+    }
   },
 
   bindHeaderEvents() {
