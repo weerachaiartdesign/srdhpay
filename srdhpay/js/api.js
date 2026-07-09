@@ -1,6 +1,6 @@
 // js/api.js - API Client for Srdh Pay
 
-const API_BASE = 'https://srdhpay-api.weerachaiartdesign.workers.dev';
+const API_BASE = 'https://srdhpay-api.weerachaiartdesign.workers.dev/';
 
 // Get token from localStorage
 function getToken() {
