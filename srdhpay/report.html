@@ -6,41 +6,243 @@
   <title>รายงาน - SRDH PAY</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 15mm; }
+    }
+  </style>
 </head>
-<body class="min-h-screen">
-  <div id="header-placeholder"></div>
+<body class="bg-gray-50 dark:bg-gray-900">
+  <div id="header-container"></div>
   <div class="flex">
-    <div id="sidebar-placeholder"></div>
+    <div id="sidebar-container"></div>
+    <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">รายงาน</h1>
+            <p class="text-gray-600 dark:text-gray-400">รายงานการเบิกจ่ายเงิน</p>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+            <button id="printSummaryBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์รายงาน</button>
+          </div>
+        </div>
 
-    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
-      <div>
-        <h2 class="font-display font-bold text-xl">รายงาน</h2>
-        <p class="text-sm text-[var(--color-text-muted)]">รายงานการเบิกจ่ายเงิน</p>
-      </div>
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+          <button id="tabSummary" class="px-4 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 dark:text-purple-400 dark:border-purple-400">รายงานการเบิกจ่าย</button>
+          <button id="tabStatus" class="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">รายงานสถานะฎีกา</button>
+        </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-        <a href="report_type.html" class="card p-6 hover:shadow-lg transition group">
-          <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14"/></svg>
-          <h3 class="font-display font-semibold mb-1 group-hover:underline">รายงานการเบิกจ่าย</h3>
-          <p class="text-sm text-[var(--color-text-muted)]">สรุปยอดเบิกจ่ายแยกตามประเภทเงินและหน่วยงาน</p>
-        </a>
-        <a href="report_status.html" class="card p-6 hover:shadow-lg transition group">
-          <svg class="w-9 h-9 mb-3" style="color:var(--color-primary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <h3 class="font-display font-semibold mb-1 group-hover:underline">รายงานสถานะฎีกา</h3>
-          <p class="text-sm text-[var(--color-text-muted)]">ค้นหารายการตามสถานะและช่วงวันที่</p>
-        </a>
+        <!-- Summary Report -->
+        <div id="summarySection" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div id="printArea">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">รายงานการเบิกจ่ายเงิน</h2>
+            <div id="summaryContent" class="overflow-x-auto">
+              <p class="text-gray-500 dark:text-gray-400">กำลังโหลด...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Report -->
+        <div id="statusSection" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hidden">
+          <div class="flex flex-wrap gap-3 mb-4">
+            <button id="statusReceivedBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition">ฎีการับเข้าระบบ</button>
+            <button id="statusEditingBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm transition">ฎีกาส่งแก้ไข</button>
+            <button id="statusProposedBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">รออนุมัติ</button>
+            <button id="printStatusBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์</button>
+          </div>
+          <div class="flex gap-3 mb-4">
+            <input type="date" id="statusDateFrom" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+            <input type="date" id="statusDateTo" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+            <button id="statusSearchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">แสดง</button>
+          </div>
+          <div id="statusContent" class="overflow-x-auto">
+            <p class="text-gray-500 dark:text-gray-400">เลือกสถานะเพื่อแสดงข้อมูล</p>
+          </div>
+        </div>
       </div>
     </main>
   </div>
 
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script>
-    if (App.requireLogin()) App.loadComponents();
+  <script type="module">
+    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
+    import { report, settings, statusMap, statusColors } from './js/api.js';
+
+    let currentStatusData = [];
+
+    async function loadSummary() {
+      showLoading('กำลังโหลด...');
+      try {
+        const res = await report.summary();
+        if (!res.success) throw new Error(res.error);
+        renderSummary(res.data);
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function renderSummary(data) {
+      const container = document.getElementById('summaryContent');
+      const { depts, moneyTypes, matrix } = data;
+
+      if (!depts || !moneyTypes || !matrix) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</p>';
+        return;
+      }
+
+      let html = '';
+      for (const mt of moneyTypes) {
+        html += `<h3 class="text-lg font-semibold text-gray-800 dark:text-white mt-4 mb-2">${mt}</h3>`;
+        html += `<table class="w-full text-sm border-collapse">
+          <thead class="bg-purple-50 dark:bg-purple-900/30">
+            <tr>
+              <th class="border px-3 py-2 text-left">หน่วยงาน</th>
+              <th class="border px-3 py-2 text-right">ฎีกาที่รับเข้าระบบ</th>
+              <th class="border px-3 py-2 text-right">ฎีกาจ่ายแล้ว</th>
+              <th class="border px-3 py-2 text-right">ฎีกาคงเหลือ</th>
+              <th class="border px-3 py-2 text-right">จำนวนเงินขอเบิกทั้งสิ้น</th>
+              <th class="border px-3 py-2 text-right">จำนวนเงินที่จ่ายแล้ว</th>
+              <th class="border px-3 py-2 text-right">จำนวนเงินคงเหลือยังไม่จ่าย</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        let total = { total_count: 0, total_amount: 0, paid_amount: 0, remaining_amount: 0 };
+        for (const dept of depts) {
+          const row = matrix[dept]?.[mt];
+          if (!row) continue;
+          total.total_count += row.total_count;
+          total.total_amount += row.total_amount;
+          total.paid_amount += row.paid_amount;
+          total.remaining_amount += row.remaining_amount;
+          html += `<tr class="border-b border-gray-100 dark:border-gray-700">
+            <td class="border px-3 py-2">${dept}</td>
+            <td class="border px-3 py-2 text-right">${row.total_count}</td>
+            <td class="border px-3 py-2 text-right">${row.total_count - row.remaining_count}</td>
+            <td class="border px-3 py-2 text-right">${row.remaining_count}</td>
+            <td class="border px-3 py-2 text-right">${formatCurrency(row.total_amount)}</td>
+            <td class="border px-3 py-2 text-right">${formatCurrency(row.paid_amount)}</td>
+            <td class="border px-3 py-2 text-right">${formatCurrency(row.remaining_amount)}</td>
+          </tr>`;
+        }
+        html += `<tr class="font-bold bg-purple-50 dark:bg-purple-900/30">
+          <td class="border px-3 py-2">รวม</td>
+          <td class="border px-3 py-2 text-right">${total.total_count}</td>
+          <td class="border px-3 py-2 text-right">${total.total_count - (total.total_count - total.paid_amount)}</td>
+          <td class="border px-3 py-2 text-right">${total.total_count - (total.total_count - total.remaining_amount)}</td>
+          <td class="border px-3 py-2 text-right">${formatCurrency(total.total_amount)}</td>
+          <td class="border px-3 py-2 text-right">${formatCurrency(total.paid_amount)}</td>
+          <td class="border px-3 py-2 text-right">${formatCurrency(total.remaining_amount)}</td>
+        </tr>`;
+        html += `</tbody></table>`;
+      }
+      container.innerHTML = html;
+    }
+
+    async function loadStatusReport(status) {
+      showLoading('กำลังโหลด...');
+      try {
+        const dateFrom = document.getElementById('statusDateFrom').value;
+        const dateTo = document.getElementById('statusDateTo').value;
+        const params = { status };
+        if (dateFrom) params.date_from = dateFrom;
+        if (dateTo) params.date_to = dateTo;
+        const res = await report.status(params);
+        if (!res.success) throw new Error(res.error);
+        currentStatusData = res.data || [];
+        renderStatusTable();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function renderStatusTable() {
+      const container = document.getElementById('statusContent');
+      if (!currentStatusData.length) {
+        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</p>';
+        return;
+      }
+
+      let html = `<table class="w-full text-sm border-collapse">
+        <thead class="bg-purple-50 dark:bg-purple-900/30">
+          <tr>
+            <th class="border px-3 py-2 text-left">วันที่รับเข้า</th>
+            <th class="border px-3 py-2 text-left">เลขที่ใบขอเบิก</th>
+            <th class="border px-3 py-2 text-left">เลขที่ฎีกา</th>
+            <th class="border px-3 py-2 text-left">เจ้าหนี้/บริษัท</th>
+            <th class="border px-3 py-2 text-left">รายการ</th>
+            <th class="border px-3 py-2 text-right">จำนวนเงิน</th>
+            <th class="border px-3 py-2 text-left">หน่วยงาน</th>
+            <th class="border px-3 py-2 text-left">ผู้ส่งเอกสาร</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      for (const item of currentStatusData) {
+        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
+          <td class="border px-3 py-2">${formatThaiDate(item.receive_date)}</td>
+          <td class="border px-3 py-2">${item.request_no_display || '-'}</td>
+          <td class="border px-3 py-2">${item.dk_no_display || '-'}</td>
+          <td class="border px-3 py-2">${item.vendor || '-'}</td>
+          <td class="border px-3 py-2">${item.description || '-'}</td>
+          <td class="border px-3 py-2 text-right">${formatCurrency(item.amount)}</td>
+          <td class="border px-3 py-2">${item.dept || '-'}</td>
+          <td class="border px-3 py-2">${item.sender || '-'}</td>
+        </tr>`;
+      }
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    // Tab switching
+    document.getElementById('tabSummary').addEventListener('click', function() {
+      document.getElementById('summarySection').classList.remove('hidden');
+      document.getElementById('statusSection').classList.add('hidden');
+      this.classList.add('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
+      this.classList.remove('text-gray-500', 'dark:text-gray-400');
+      document.getElementById('tabStatus').classList.remove('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
+      document.getElementById('tabStatus').classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+      loadSummary();
+    });
+    document.getElementById('tabStatus').addEventListener('click', function() {
+      document.getElementById('summarySection').classList.add('hidden');
+      document.getElementById('statusSection').classList.remove('hidden');
+      this.classList.add('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
+      this.classList.remove('text-gray-500', 'dark:text-gray-400');
+      document.getElementById('tabSummary').classList.remove('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
+      document.getElementById('tabSummary').classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
+      // Load default status (RECEIVED)
+      loadStatusReport('RECEIVED');
+    });
+
+    // Status buttons
+    document.getElementById('statusReceivedBtn').addEventListener('click', () => loadStatusReport('RECEIVED'));
+    document.getElementById('statusEditingBtn').addEventListener('click', () => loadStatusReport('EDITING'));
+    document.getElementById('statusProposedBtn').addEventListener('click', () => loadStatusReport('PROPOSED'));
+    document.getElementById('statusSearchBtn').addEventListener('click', () => {
+      const status = document.querySelector('#statusSection .bg-blue-600') ? 'RECEIVED' : 
+                     document.querySelector('#statusSection .bg-orange-500') ? 'EDITING' : 'PROPOSED';
+      loadStatusReport(status);
+    });
+
+    // Print
+    document.getElementById('printSummaryBtn').addEventListener('click', () => window.print());
+    document.getElementById('printStatusBtn').addEventListener('click', () => window.print());
+
+    // Init
+    const user = requireRole(['admin', 'manager']);
+    if (user) {
+      await loadLayout();
+      loadSummary();
+    }
   </script>
 </body>
 </html>
