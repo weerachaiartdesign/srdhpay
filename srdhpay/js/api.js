@@ -2,13 +2,12 @@
 
 const API_BASE = 'https://srdhpay-api.weerachaiartdesign.workers.dev/api';
 
-// Get token from localStorage
-function getToken() {
+// ---- Token Management ----
+export function getToken() {
   return localStorage.getItem('srdh_token');
 }
 
-// Set token
-function setToken(token) {
+export function setToken(token) {
   if (token) {
     localStorage.setItem('srdh_token', token);
   } else {
@@ -16,14 +15,13 @@ function setToken(token) {
   }
 }
 
-// Get current user from localStorage
-function getCurrentUser() {
+// ---- User Management ----
+export function getCurrentUser() {
   const user = localStorage.getItem('srdh_user');
   return user ? JSON.parse(user) : null;
 }
 
-// Set current user
-function setCurrentUser(user) {
+export function setCurrentUser(user) {
   if (user) {
     localStorage.setItem('srdh_user', JSON.stringify(user));
   } else {
@@ -31,7 +29,7 @@ function setCurrentUser(user) {
   }
 }
 
-// Generic fetch with auth
+// ---- Generic fetch ----
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const headers = {
@@ -51,10 +49,9 @@ async function apiFetch(endpoint, options = {}) {
 
   if (!response.ok) {
     if (response.status === 401) {
-      // Token expired or invalid
       setToken(null);
       setCurrentUser(null);
-      if (window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+      if (!window.location.pathname.includes('index.html')) {
         window.location.href = '/index.html';
       }
     }
@@ -64,7 +61,7 @@ async function apiFetch(endpoint, options = {}) {
   return data;
 }
 
-// Auth APIs
+// ---- Auth APIs ----
 export const auth = {
   login: (email, password) => apiFetch('/auth/login', {
     method: 'POST',
@@ -75,7 +72,7 @@ export const auth = {
   me: () => apiFetch('/auth/me'),
 };
 
-// Register APIs
+// ---- Register APIs ----
 export const register = {
   list: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -131,7 +128,7 @@ export const register = {
   }),
 };
 
-// Settings APIs
+// ---- Settings APIs ----
 export const settings = {
   get: (table, id = null) => {
     const url = id ? `/settings/${table}/${id}` : `/settings/${table}`;
@@ -150,7 +147,7 @@ export const settings = {
   }),
 };
 
-// User APIs
+// ---- User APIs ----
 export const users = {
   list: () => apiFetch('/users'),
   create: (data) => apiFetch('/users', {
@@ -168,7 +165,7 @@ export const users = {
   }),
 };
 
-// Report APIs
+// ---- Report APIs ----
 export const report = {
   summary: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -180,7 +177,7 @@ export const report = {
   },
 };
 
-// Audit APIs
+// ---- Audit APIs ----
 export const audit = {
   list: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
@@ -188,7 +185,7 @@ export const audit = {
   },
 };
 
-// System APIs
+// ---- System APIs ----
 export const system = {
   permission: {
     get: () => apiFetch('/system/permission'),
@@ -232,14 +229,7 @@ export const system = {
   },
 };
 
-// Utility: check if user has permission
-export function hasPermission(permissionMatrix, module, role) {
-  const row = permissionMatrix.find(p => p.module === module);
-  if (!row) return false;
-  return row[role] === 1;
-}
-
-// Utility: status mapping
+// ---- Status Mapping ----
 export const statusMap = {
   WAITING: 'รอเอกสาร',
   RECEIVED: 'รับเข้าระบบ',
