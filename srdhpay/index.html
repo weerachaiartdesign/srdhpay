@@ -60,83 +60,53 @@
   </div>
 
   <script type="module">
-    import { auth, setToken, setCurrentUser } from './js/api.js';
+  import { auth, setToken, setCurrentUser } from './js/api.js';
+  import { showToast, showLoading, hideLoading } from './js/app.js';
 
-    const form = document.getElementById('loginForm');
-    const guestBtn = document.getElementById('guestBtn');
-    const loadingDiv = document.getElementById('loginLoading');
-    const loadingText = document.getElementById('loginLoadingText');
+  const form = document.getElementById('loginForm');
+  const guestBtn = document.getElementById('guestBtn');
 
-    function showLoginLoading(msg = 'กำลังเข้าสู่ระบบ...') {
-      loadingText.textContent = msg;
-      loadingDiv.classList.remove('hidden');
-    }
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-    function hideLoginLoading() {
-      loadingDiv.classList.add('hidden');
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-
-      console.log('Login attempt:', email);
-      showLoginLoading('กำลังเข้าสู่ระบบ...');
-
-      try {
-        const result = await auth.login(email, password);
-        console.log('Login result:', result);
-
-        if (result.success) {
-          setToken(result.data.token);
-          setCurrentUser(result.data);
-          console.log('User saved:', result.data);
-          // แสดง Toast
-          const toast = document.createElement('div');
-          toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-500';
-          toast.textContent = 'ยินดีต้อนรับ ' + result.data.username;
-          document.body.appendChild(toast);
-          setTimeout(() => {
-            toast.classList.add('opacity-0');
-            setTimeout(() => toast.remove(), 500);
-          }, 2000);
-
-          // Redirect
-          setTimeout(() => {
-            window.location.href = '/dashboard.html';
-          }, 500);
-        } else {
-          hideLoginLoading();
-          alert(result.error || 'เข้าสู่ระบบล้มเหลว');
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        hideLoginLoading();
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+    showLoading('กำลังเข้าสู่ระบบ...');
+    try {
+      const result = await auth.login(email, password);
+      if (result.success) {
+        setToken(result.data.token);
+        setCurrentUser(result.data);
+        showToast('ยินดีต้อนรับ ' + result.data.username, 'success');
+        window.location.href = '/dashboard.html';
+      } else {
+        showToast(result.error || 'เข้าสู่ระบบล้มเหลว', 'error');
       }
-    });
+    } catch (err) {
+      showToast(err.message || 'เกิดข้อผิดพลาด', 'error');
+    } finally {
+      hideLoading();
+    }
+  });
 
-    guestBtn.addEventListener('click', async () => {
-      console.log('Guest login');
-      showLoginLoading('กำลังสร้างเซสชันผู้เยี่ยมชม...');
-      try {
-        const result = await auth.guest();
-        console.log('Guest result:', result);
-        if (result.success) {
-          setToken(result.data.token);
-          setCurrentUser(result.data);
-          window.location.href = '/dashboard.html';
-        } else {
-          hideLoginLoading();
-          alert(result.error || 'ไม่สามารถเข้าสู่ระบบแบบผู้เยี่ยมชม');
-        }
-      } catch (err) {
-        console.error('Guest error:', err);
-        hideLoginLoading();
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+  guestBtn.addEventListener('click', async () => {
+    showLoading('กำลังสร้างเซสชันผู้เยี่ยมชม...');
+    try {
+      const result = await auth.guest();
+      if (result.success) {
+        setToken(result.data.token);
+        setCurrentUser(result.data);
+        showToast('เข้าสู่ระบบแบบผู้เยี่ยมชม', 'info');
+        window.location.href = '/dashboard.html';
+      } else {
+        showToast(result.error || 'ไม่สามารถเข้าสู่ระบบแบบผู้เยี่ยมชม', 'error');
       }
-    });
-  </script>
+    } catch (err) {
+      showToast(err.message || 'เกิดข้อผิดพลาด', 'error');
+    } finally {
+      hideLoading();
+    }
+  });
+</script>
 </body>
 </html>
