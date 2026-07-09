@@ -6,291 +6,387 @@
   <title>ทะเบียนเบิกจ่ายเงิน - SRDH PAY</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body { font-family: 'Prompt', sans-serif; }
+    .card-view {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      .card-view {
+        display: none;
+      }
+      .table-view {
+        display: block;
+      }
+    }
+    @media (max-width: 767px) {
+      .table-view {
+        display: none;
+      }
+      .card-view {
+        display: grid;
+      }
+    }
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+  </style>
 </head>
-<body class="min-h-screen">
-  <div id="header-placeholder"></div>
+<body class="bg-gray-50 dark:bg-gray-900">
+  <div id="header-container"></div>
   <div class="flex">
-    <div id="sidebar-placeholder"></div>
-
-    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
-      <div>
-        <h2 class="font-display font-bold text-xl">ทะเบียนเบิกจ่ายเงิน</h2>
-        <p class="text-sm text-[var(--color-text-muted)]">ตรวจสอบรายการและสถานะ</p>
-      </div>
-
-      <!-- ค้นหา + ตัวกรอง -->
-      <div class="card p-4 space-y-3">
-        <input type="text" id="searchBox" data-search-box placeholder="ค้นหา: ประเภทเงิน, หน่วยงาน, เจ้าหนี้, จำนวนเงิน, รายการ, เลขที่รับ/ใบขอเบิก/ฎีกา"
-               class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent focus:outline-none focus:ring-2" style="--tw-ring-color:var(--color-primary)">
-        <div class="flex flex-wrap gap-2">
-          <select id="filterMoneyType" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm"><option value="">ประเภทเงิน: ทั้งหมด</option></select>
-          <select id="filterDept" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm"><option value="">หน่วยงาน: ทั้งหมด</option></select>
-          <select id="filterStatus" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
-            <option value="">สถานะ: ทั้งหมด</option>
-            <option value="RECEIVED">รับเข้าระบบ</option>
-            <option value="CHECKUP">ตรวจสอบ</option>
-            <option value="EDITING">ส่งแก้ไข</option>
-            <option value="PASSED">ตรวจผ่าน</option>
-            <option value="PROPOSED">เสนอ</option>
-            <option value="APPROVED">อนุมัติ</option>
-            <option value="PAID">จ่ายแล้ว</option>
-          </select>
-          <button id="btnClearFilter" class="btn btn-outline text-sm">ล้างการกรอง</button>
-          <div class="flex-1"></div>
-          <select id="sortOrder" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
-            <option value="latest">ล่าสุดก่อน</option>
-            <option value="oldest">เก่าสุดก่อน</option>
-          </select>
-          <select id="pageSize" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
-            <option value="50">50 / หน้า</option>
-            <option value="100">100 / หน้า</option>
-            <option value="200">200 / หน้า</option>
-            <option value="500">500 / หน้า</option>
-          </select>
+    <div id="sidebar-container"></div>
+    <main class="flex-1 p-4 md:p-6 overflow-y-auto">
+      <div class="max-w-7xl mx-auto">
+        <!-- Page Header -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ทะเบียนเบิกจ่ายเงิน</h1>
+            <p class="text-gray-600 dark:text-gray-400">ตรวจสอบรายการและสถานะ</p>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+            <select id="limitSelect" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-sm bg-white dark:bg-gray-800 dark:text-white">
+              <option value="50">50 รายการ</option>
+              <option value="100">100 รายการ</option>
+              <option value="200">200 รายการ</option>
+              <option value="500">500 รายการ</option>
+            </select>
+            <select id="sortSelect" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-1 text-sm bg-white dark:bg-gray-800 dark:text-white">
+              <option value="desc">ล่าสุด</option>
+              <option value="asc">เก่าสุด</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      <!-- Desktop Table -->
-      <div class="table-wrap desktop-table">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>ลำดับ</th><th>สถานะ</th><th>เลขที่ใบขอเบิก/เลขที่ฎีกา</th>
-              <th>ชื่อเจ้าหนี้/บริษัท</th><th>รายการ</th><th>จำนวนเงินขอเบิก</th><th>ประเภทเงิน/หน่วยงาน</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-
-      <!-- Mobile Cards -->
-      <div id="mobileCards" class="mobile-cards"></div>
-
-      <!-- Pagination -->
-      <div class="flex items-center justify-between text-sm pt-2">
-        <span id="pageInfo" class="text-[var(--color-text-muted)]">-</span>
-        <div class="flex gap-2">
-          <button id="btnPrevPage" class="btn btn-outline">ก่อนหน้า</button>
-          <button id="btnNextPage" class="btn btn-outline">ถัดไป</button>
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+            <input id="searchInput" type="text" placeholder="ค้นหา..." class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white md:col-span-2">
+            <select id="filterMoneyType" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+              <option value="">ทุกประเภทเงิน</option>
+            </select>
+            <select id="filterDept" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+              <option value="">ทุกหน่วยงาน</option>
+            </select>
+            <select id="filterStatus" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
+              <option value="">ทุกสถานะ</option>
+              <option value="RECEIVED">รับเข้าระบบ</option>
+              <option value="CHECKUP">ตรวจสอบ</option>
+              <option value="EDITING">ส่งแก้ไข</option>
+              <option value="PASSED">ตรวจผ่าน</option>
+              <option value="PROPOSED">เสนอ</option>
+              <option value="APPROVED">อนุมัติ</option>
+              <option value="PAID">จ่ายแล้ว</option>
+            </select>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button id="searchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
+            <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้างการกรอง</button>
+          </div>
         </div>
+
+        <!-- Table View (Desktop) -->
+        <div class="table-view bg-white dark:bg-gray-800 rounded-lg shadow overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-purple-50 dark:bg-purple-900/30">
+              <tr>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">ลำดับ</th>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">สถานะ</th>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">เลขที่ใบขอเบิก/ฎีกา</th>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">เจ้าหนี้/บริษัท</th>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">รายการ</th>
+                <th class="px-3 py-2 text-right text-gray-700 dark:text-gray-300">จำนวนเงิน</th>
+                <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-300">ประเภท/หน่วยงาน</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="7" class="text-center py-8 text-gray-500 dark:text-gray-400">กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+          <div id="tablePagination" class="flex justify-between items-center px-4 py-3 border-t border-gray-200 dark:border-gray-700"></div>
+        </div>
+
+        <!-- Card View (Mobile) -->
+        <div id="cardContainer" class="card-view">
+          <!-- Rendered by JS -->
+        </div>
+        <div id="cardPagination" class="flex justify-between items-center mt-4 md:hidden"></div>
       </div>
     </main>
   </div>
 
-  <script src="assets/js/api.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script>
-    if (App.requireLogin()) {
-      App.loadComponents();
-      init();
-    }
+  <!-- Detail Popup -->
+  <div id="detailPopup" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800 dark:text-white">รายละเอียดรายการ</h2>
+        <button onclick="closeDetail()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">&times;</button>
+      </div>
+      <div id="detailContent"></div>
+    </div>
+  </div>
 
-    const state = {
-      page: 1,
-      pageSize: Pref.get('list_pageSize', 50),
-      sort: Pref.get('list_sort', 'latest'),
-      search: Pref.get('list_search', ''),
-      money_type: Pref.get('list_money_type', ''),
-      dept: Pref.get('list_dept', ''),
-      status: Pref.get('list_status', '')
-    };
+  <script type="module">
+    import { loadLayout, requireAuth, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
+    import { register, settings, statusMap, statusColors } from './js/api.js';
 
-    async function init() {
-      document.getElementById('pageSize').value = state.pageSize;
-      document.getElementById('sortOrder').value = state.sort;
-      document.getElementById('searchBox').value = state.search;
-      document.getElementById('filterStatus').value = state.status;
+    let currentData = [];
+    let currentPage = 1;
+    let currentLimit = 50;
+    let totalItems = 0;
+    let moneyTypes = [];
+    let depts = [];
 
+    async function loadFilters() {
       try {
-        const [moneyTypesRes, deptsRes] = await Promise.all([
-          api.get('/api/settings/money-types', { all: '1' }),
-          api.get('/api/settings/depts', { all: '1' })
+        const [mtRes, deptRes] = await Promise.all([
+          settings.get('money_type'),
+          settings.get('dept'),
         ]);
-        fillSelect('filterMoneyType', moneyTypesRes.data, state.money_type, 'ประเภทเงิน: ทั้งหมด');
-        fillSelect('filterDept', deptsRes.data, state.dept, 'หน่วยงาน: ทั้งหมด');
-      } catch (err) { App.errorAlert(err); }
-
-      bindEvents();
-      loadList();
-    }
-
-    function fillSelect(id, items, selected, allLabel) {
-      const el = document.getElementById(id);
-      el.innerHTML = `<option value="">${allLabel}</option>` +
-        items.map((i) => `<option value="${i.name}" ${i.name === selected ? 'selected' : ''}>${i.name}</option>`).join('');
-    }
-
-    function bindEvents() {
-      document.getElementById('searchBox').addEventListener('input', App.debounce((e) => {
-        state.search = e.target.value; state.page = 1; Pref.set('list_search', state.search); loadList();
-      }, 450));
-      document.getElementById('filterMoneyType').addEventListener('change', (e) => {
-        state.money_type = e.target.value; state.page = 1; Pref.set('list_money_type', state.money_type); loadList();
-      });
-      document.getElementById('filterDept').addEventListener('change', (e) => {
-        state.dept = e.target.value; state.page = 1; Pref.set('list_dept', state.dept); loadList();
-      });
-      document.getElementById('filterStatus').addEventListener('change', (e) => {
-        state.status = e.target.value; state.page = 1; Pref.set('list_status', state.status); loadList();
-      });
-      document.getElementById('sortOrder').addEventListener('change', (e) => {
-        state.sort = e.target.value; Pref.set('list_sort', state.sort); loadList();
-      });
-      document.getElementById('pageSize').addEventListener('change', (e) => {
-        state.pageSize = parseInt(e.target.value, 10); state.page = 1; Pref.set('list_pageSize', state.pageSize); loadList();
-      });
-      document.getElementById('btnClearFilter').addEventListener('click', () => {
-        state.search = ''; state.money_type = ''; state.dept = ''; state.status = ''; state.page = 1;
-        document.getElementById('searchBox').value = '';
-        document.getElementById('filterMoneyType').value = '';
-        document.getElementById('filterDept').value = '';
-        document.getElementById('filterStatus').value = '';
-        ['list_search', 'list_money_type', 'list_dept', 'list_status'].forEach((k) => Pref.set(k, ''));
-        loadList();
-      });
-      document.getElementById('btnPrevPage').addEventListener('click', () => { if (state.page > 1) { state.page--; loadList(); } });
-      document.getElementById('btnNextPage').addEventListener('click', () => { state.page++; loadList(); });
-    }
-
-    let lastData = [];
-
-    async function loadList() {
-      document.getElementById('tableBody').innerHTML = `<tr><td colspan="7"><div class="skeleton h-6 my-1"></div></td></tr>`.repeat(5);
-      try {
-        const res = await api.get('/api/register/list', {
-          page: state.page, pageSize: state.pageSize,
-          sort: state.sort === 'oldest' ? 'oldest' : 'latest',
-          search: state.search, money_type: state.money_type, dept: state.dept, status: state.status
-        });
-        lastData = res.data;
-        renderTable(res.data);
-        renderMobileCards(res.data);
-        renderPagination(res.pagination);
-      } catch (err) {
-        App.errorAlert(err);
+        if (mtRes.success) {
+          moneyTypes = mtRes.data;
+          const select = document.getElementById('filterMoneyType');
+          moneyTypes.forEach(mt => {
+            const opt = document.createElement('option');
+            opt.value = mt.name;
+            opt.textContent = mt.name;
+            select.appendChild(opt);
+          });
+        }
+        if (deptRes.success) {
+          depts = deptRes.data;
+          const select = document.getElementById('filterDept');
+          depts.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.name;
+            opt.textContent = d.name;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load filters:', e);
       }
     }
 
-    function renderTable(rows) {
+    async function loadData() {
+      showLoading('กำลังโหลดข้อมูล...');
+      try {
+        const search = document.getElementById('searchInput').value;
+        const moneyType = document.getElementById('filterMoneyType').value;
+        const dept = document.getElementById('filterDept').value;
+        const status = document.getElementById('filterStatus').value;
+        const sort = document.getElementById('sortSelect').value;
+        const limit = parseInt(document.getElementById('limitSelect').value);
+        currentLimit = limit;
+
+        const params = {
+          page: currentPage,
+          limit,
+          sort,
+        };
+        if (search) params.search = search;
+        if (moneyType) params.money_type = moneyType;
+        if (dept) params.dept = dept;
+        if (status) params.status = status;
+
+        const res = await register.list(params);
+        if (!res.success) throw new Error(res.error);
+
+        currentData = res.data.data || [];
+        totalItems = res.data.pagination?.total || 0;
+
+        renderTable();
+        renderCards();
+        renderPagination();
+
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    function renderTable() {
       const tbody = document.getElementById('tableBody');
-      if (rows.length === 0) {
-        // ตรวจว่ามีข้อมูลในระบบจริงไหม (เผื่อทุกรายการยังเป็น WAITING ยังไม่ได้รับเข้าระบบ)
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="text-center py-10">
-              <p class="text-[var(--color-text-muted)] mb-2">ไม่พบรายการ</p>
-              <p class="text-xs text-[var(--color-text-muted)]">
-                หมายเหตุ: หน้านี้ไม่แสดงรายการสถานะ "รอเอกสาร"<br>
-                หากเพิ่งลงทะเบียน กรุณาไปที่หน้า <a href="receive.html" class="underline" style="color:var(--color-primary)">รับเข้าระบบ</a> ก่อน
-              </p>
-            </td>
-          </tr>`;
+      if (!currentData.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</td></tr>`;
         return;
       }
-      tbody.innerHTML = rows.map((r) => `
-        <tr class="cursor-pointer" onclick="openDetail('${r.uuid}')">
-          <td><div class="font-medium">${App.thaiDate(r.receive_date)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.emptyDash(r.receive_no_display)}</div></td>
-          <td>${App.statusBadge(r.status)}</td>
-          <td><div>${App.emptyDash(r.request_no_display)}</div><div class="text-xs text-[var(--color-text-muted)]">${App.emptyDash(r.dk_no_display)}</div></td>
-          <td class="font-semibold">${r.vendor}</td>
-          <td class="max-w-xs truncate" title="${r.description}">${r.description}</td>
-          <td class="font-display font-semibold text-right whitespace-nowrap">${App.money(r.amount)}</td>
-          <td><div>${r.money_type}</div><div class="text-xs text-[var(--color-text-muted)]">${r.dept}</div></td>
-        </tr>`).join('');
-    }
 
-    function renderMobileCards(rows) {
-      const wrap = document.getElementById('mobileCards');
-      if (rows.length === 0) { wrap.innerHTML = `<p class="text-center py-8 text-[var(--color-text-muted)]">ไม่พบรายการ</p>`; return; }
-      wrap.innerHTML = rows.map((r) => `
-        <div class="mobile-item-card" onclick="openDetail('${r.uuid}')">
-          <div class="flex justify-between items-start mb-1.5">
-            <span class="font-semibold text-sm">${r.vendor}</span>
-            ${App.statusBadge(r.status)}
-          </div>
-          <p class="text-sm text-[var(--color-text-muted)] mb-1.5">${r.description}</p>
-          <div class="flex justify-between text-sm">
-            <span>${r.money_type} · ${r.dept}</span>
-            <span class="font-display font-semibold">${App.money(r.amount)}</span>
-          </div>
-          <div class="text-xs text-[var(--color-text-muted)] mt-1">รับ ${App.emptyDash(r.receive_no_display)} · ${App.thaiDate(r.receive_date)}</div>
-        </div>`).join('');
-    }
-
-    function renderPagination(p) {
-      document.getElementById('pageInfo').textContent = `หน้า ${p.page} / ${p.totalPages || 1} (ทั้งหมด ${p.total.toLocaleString()} รายการ)`;
-      document.getElementById('btnPrevPage').disabled = p.page <= 1;
-      document.getElementById('btnNextPage').disabled = p.page >= p.totalPages;
-    }
-
-    const TIMELINE_STEPS = [
-      { key: 'RECEIVED', label: 'รับเข้าระบบ', dateField: 'receive_date' },
-      { key: 'CHECKUP', label: 'ตรวจสอบ', dateField: null },
-      { key: 'PASSED', label: 'ตรวจผ่าน', dateField: 'pass_date' },
-      { key: 'PROPOSED', label: 'เสนอ', dateField: 'propose_date' },
-      { key: 'APPROVED', label: 'อนุมัติ', dateField: 'approve_date' },
-      { key: 'PAID', label: 'จ่ายแล้ว', dateField: 'pay_date' }
-    ];
-    const STEP_ORDER = ['RECEIVED', 'CHECKUP', 'EDITING', 'PASSED', 'PROPOSED', 'APPROVED', 'PAID'];
-
-    window.openDetail = async function (uuid) {
-      App.showLoading('กำลังโหลด...');
-      try {
-        const res = await api.get(`/api/register/${uuid}`);
-        App.closeLoading();
-        showDetailPopup(res.data);
-      } catch (err) {
-        App.errorAlert(err);
+      let html = '';
+      let seq = (currentPage - 1) * currentLimit + 1;
+      for (const item of currentData) {
+        const statusThai = statusMap[item.status] || item.status;
+        const statusClass = statusColors[item.status] || 'bg-gray-100 text-gray-700';
+        html += `
+          <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-700/50 cursor-pointer" onclick="showDetail('${item.uuid}')">
+            <td class="px-3 py-2 text-gray-600 dark:text-gray-400">
+              <div>${seq++}</div>
+              <div class="text-xs text-gray-400">${formatThaiDate(item.receive_date)}</div>
+              <div class="text-xs text-gray-400">${item.receive_no_display || '-'}</div>
+            </td>
+            <td class="px-3 py-2"><span class="status-badge ${statusClass}">${statusThai}</span></td>
+            <td class="px-3 py-2">
+              <div class="font-medium">${item.request_no_display || '-'}</div>
+              <div class="text-xs text-gray-500">ฎีกา: ${item.dk_no_display || '-'}</div>
+            </td>
+            <td class="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">${item.vendor || '-'}</td>
+            <td class="px-3 py-2 text-gray-600 dark:text-gray-400 max-w-xs truncate">${item.description || '-'}</td>
+            <td class="px-3 py-2 text-right font-bold text-purple-600 dark:text-purple-400">${formatCurrency(item.amount)}</td>
+            <td class="px-3 py-2">
+              <div>${item.money_type || '-'}</div>
+              <div class="text-xs text-gray-500">${item.dept || '-'}</div>
+            </td>
+          </tr>
+        `;
       }
+      tbody.innerHTML = html;
+    }
+
+    function renderCards() {
+      const container = document.getElementById('cardContainer');
+      if (!currentData.length) {
+        container.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</div>`;
+        return;
+      }
+
+      let html = '';
+      for (const item of currentData) {
+        const statusThai = statusMap[item.status] || item.status;
+        const statusClass = statusColors[item.status] || 'bg-gray-100 text-gray-700';
+        html += `
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border-l-4 border-purple-400 cursor-pointer" onclick="showDetail('${item.uuid}')">
+            <div class="flex justify-between items-start">
+              <span class="status-badge ${statusClass}">${statusThai}</span>
+              <span class="text-sm text-gray-500">${formatThaiDate(item.receive_date)}</span>
+            </div>
+            <div class="mt-2">
+              <div class="font-medium">${item.vendor || '-'}</div>
+              <div class="text-sm text-gray-500 truncate">${item.description || '-'}</div>
+            </div>
+            <div class="mt-2 flex justify-between items-center">
+              <div>
+                <span class="text-xs text-gray-500">ใบขอเบิก: ${item.request_no_display || '-'}</span>
+                <span class="text-xs text-gray-500 ml-2">ฎีกา: ${item.dk_no_display || '-'}</span>
+              </div>
+              <span class="font-bold text-purple-600 dark:text-purple-400">${formatCurrency(item.amount)}</span>
+            </div>
+            <div class="mt-1 flex flex-wrap gap-1 text-xs text-gray-500">
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">${item.money_type || '-'}</span>
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">${item.dept || '-'}</span>
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">${item.receive_no_display || '-'}</span>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(totalItems / currentLimit);
+      const paginationHtml = `
+        <div class="flex items-center gap-2">
+          <button onclick="goToPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''} class="px-3 py-1 border rounded ${currentPage <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">ก่อนหน้า</button>
+          <span class="text-sm text-gray-600 dark:text-gray-400">หน้า ${currentPage} จาก ${totalPages || 1}</span>
+          <button onclick="goToPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''} class="px-3 py-1 border rounded ${currentPage >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}">ถัดไป</button>
+        </div>
+        <span class="text-sm text-gray-500 dark:text-gray-400">ทั้งหมด ${totalItems} รายการ</span>
+      `;
+      document.getElementById('tablePagination').innerHTML = paginationHtml;
+      document.getElementById('cardPagination').innerHTML = paginationHtml;
+    }
+
+    window.goToPage = function(page) {
+      if (page < 1) return;
+      const totalPages = Math.ceil(totalItems / currentLimit);
+      if (page > totalPages) return;
+      currentPage = page;
+      loadData();
     };
 
-    function buildTimelineHtml(row) {
-      const currentIdx = STEP_ORDER.indexOf(row.status);
-      const steps = [...TIMELINE_STEPS];
-      if (row.edit_date) {
-        // แทรกขั้น "ส่งแก้ไข" หลังตรวจสอบ ถ้ามีการส่งแก้ไขเกิดขึ้นจริง
-        steps.splice(2, 0, { key: 'EDITING', label: 'ส่งแก้ไข', dateField: 'edit_date' });
-      }
-      return `<div class="flex overflow-x-auto gap-1 pb-2">` + steps.map((s) => {
-        const idx = STEP_ORDER.indexOf(s.key);
-        const reached = currentIdx >= 0 && idx <= currentIdx;
-        const dateVal = s.dateField ? row[s.dateField] : null;
-        return `
-          <div class="flex-1 min-w-[90px] text-center">
-            <div class="w-3 h-3 rounded-full mx-auto mb-1 ${reached ? '' : 'opacity-30'}" style="background-color:${reached ? 'var(--color-primary)' : 'var(--color-border)'}"></div>
-            <div class="text-xs font-medium ${reached ? '' : 'text-[var(--color-text-muted)]'}">${s.label}</div>
-            <div class="text-[10px] text-[var(--color-text-muted)]">${dateVal ? App.thaiDate(dateVal) : '-'}</div>
-          </div>`;
-      }).join('<div class="flex-1 h-[2px] bg-[var(--color-border)] mt-1.5"></div>') + `</div>`;
-    }
+    window.showDetail = async function(uuid) {
+      const item = currentData.find(d => d.uuid === uuid);
+      if (!item) return;
 
-    function showDetailPopup(row) {
-      const fields = [
-        ['เลขที่รับ', row.receive_no_display], ['เลขที่ใบขอเบิก', row.request_no_display],
-        ['เลขที่ฎีกา', row.dk_no_display], ['ประเภทเงิน', row.money_type],
-        ['หน่วยงาน', row.dept], ['เลข e-GP', row.egp_no],
-        ['ชื่อเจ้าหนี้/บริษัท', row.vendor], ['จำนวนเงินขอเบิก', App.money(row.amount)],
-        ['รายการ', row.description]
-      ];
-      Swal.fire({
-        title: 'รายละเอียดรายการ',
-        width: 640,
-        html: `
-          ${buildTimelineHtml(row)}
-          <div class="text-left grid grid-cols-2 gap-2 text-sm mt-3">
-            ${fields.map(([label, val]) => `
-              <div class="col-span-2 sm:col-span-1">
-                <div class="text-xs text-[var(--color-text-muted)]">${label}</div>
-                <div class="font-medium">${App.emptyDash(val)}</div>
-              </div>`).join('')}
-          </div>`,
-        confirmButtonText: 'ปิด',
-        confirmButtonColor: '#9F7AEA'
-      });
+      const content = document.getElementById('detailContent');
+      content.innerHTML = `
+        <div class="space-y-2 text-sm">
+          <div class="grid grid-cols-2 gap-2">
+            <div><span class="text-gray-500">เลขที่รับ:</span> ${item.receive_no_display || '-'}</div>
+            <div><span class="text-gray-500">เลขที่ใบขอเบิก:</span> ${item.request_no_display || '-'}</div>
+            <div><span class="text-gray-500">เลขที่ฎีกา:</span> ${item.dk_no_display || '-'}</div>
+            <div><span class="text-gray-500">ประเภทเงิน:</span> ${item.money_type || '-'}</div>
+            <div><span class="text-gray-500">หน่วยงาน:</span> ${item.dept || '-'}</div>
+            <div><span class="text-gray-500">เลข e-GP:</span> ${item.egp_no || '-'}</div>
+            <div><span class="text-gray-500">เจ้าหนี้/บริษัท:</span> ${item.vendor || '-'}</div>
+            <div><span class="text-gray-500">จำนวนเงิน:</span> ${formatCurrency(item.amount)}</div>
+          </div>
+          <div><span class="text-gray-500">รายการ:</span> ${item.description || '-'}</div>
+          <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">รับเข้า: ${formatThaiDate(item.receive_date)}</span>
+              ${item.edit_date ? `<span class="bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded">ส่งแก้ไข: ${formatThaiDate(item.edit_date)}</span>` : ''}
+              ${item.return_date ? `<span class="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">รับคืน: ${formatThaiDate(item.return_date)}</span>` : ''}
+              ${item.pass_date ? `<span class="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">ตรวจผ่าน: ${formatThaiDate(item.pass_date)}</span>` : ''}
+              ${item.propose_date ? `<span class="bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded">เสนอ: ${formatThaiDate(item.propose_date)}</span>` : ''}
+              ${item.approve_date ? `<span class="bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded">อนุมัติ: ${formatThaiDate(item.approve_date)}</span>` : ''}
+              ${item.pay_date ? `<span class="bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">จ่ายแล้ว: ${formatThaiDate(item.pay_date)}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('detailPopup').classList.remove('hidden');
+    };
+
+    window.closeDetail = function() {
+      document.getElementById('detailPopup').classList.add('hidden');
+    };
+
+    // Close popup on backdrop click
+    document.getElementById('detailPopup').addEventListener('click', function(e) {
+      if (e.target === this) closeDetail();
+    });
+
+    // Event listeners
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      currentPage = 1;
+      loadData();
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('filterMoneyType').value = '';
+      document.getElementById('filterDept').value = '';
+      document.getElementById('filterStatus').value = '';
+      currentPage = 1;
+      loadData();
+    });
+    document.getElementById('limitSelect').addEventListener('change', () => {
+      currentPage = 1;
+      loadData();
+    });
+    document.getElementById('sortSelect').addEventListener('change', loadData);
+
+    // Enter key for search
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        currentPage = 1;
+        loadData();
+      }
+    });
+
+    // Init
+    const user = requireAuth();
+    if (user) {
+      await loadLayout();
+      await loadFilters();
+      await loadData();
     }
   </script>
 </body>
