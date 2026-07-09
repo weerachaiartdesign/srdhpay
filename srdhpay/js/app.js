@@ -1,6 +1,6 @@
 // js/app.js - Main application script
 
-import { auth, getCurrentUser, setCurrentUser, setToken, statusMap } from './api.js';
+import { auth, getCurrentUser, setCurrentUser, setToken, statusMap, getToken } from './api.js';
 
 // ---- Component Loader ----
 async function loadComponent(selector, url) {
@@ -38,6 +38,7 @@ export async function loadLayout() {
     setupUserInfo();
     setupDarkModeToggle();
     highlightActiveMenu();
+    setupHamburger();
     console.log('Layout loaded successfully');
   } catch (err) {
     console.error('Layout loading failed:', err);
@@ -46,12 +47,29 @@ export async function loadLayout() {
   }
 }
 
+// ---- Hamburger Toggle ----
+export function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar-container');
+  if (sidebar) {
+    sidebar.classList.toggle('hidden');
+    sidebar.classList.toggle('block');
+  }
+}
+
+function setupHamburger() {
+  const btn = document.getElementById('hamburgerBtn');
+  if (btn) {
+    btn.addEventListener('click', toggleSidebar);
+  }
+}
+
 // ---- Auth Guard ----
 export function requireAuth(redirect = true) {
   const user = getCurrentUser();
-  console.log('requireAuth - user:', user);
-  if (!user) {
-    console.warn('No user found, redirecting to login');
+  const token = getToken();
+  console.log('requireAuth - user:', user, 'token:', token ? 'exists' : 'none');
+  if (!user || !token) {
+    console.warn('No user or token, redirecting to login');
     if (redirect && !window.location.pathname.includes('index.html')) {
       window.location.href = '/index.html';
     }
@@ -79,11 +97,9 @@ export function toggleDarkMode() {
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
   updateDarkModeIcon();
-  // Update user preference if logged in
   const user = getCurrentUser();
   if (user) {
-    // Optionally update via API
-    // We'll handle this later
+    // Optionally update via API later
   }
 }
 
@@ -122,7 +138,6 @@ function setupDarkModeToggle() {
 // ---- User Info in Header ----
 function setupUserInfo() {
   const user = getCurrentUser();
-  console.log('setupUserInfo - user:', user);
   if (user) {
     const nameEl = document.getElementById('userName');
     const roleEl = document.getElementById('userRole');
@@ -258,8 +273,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
 });
 
-// Expose logout globally
+// Expose functions globally
 window.logout = logout;
 window.showToast = showToast;
 window.showLoading = showLoading;
 window.hideLoading = hideLoading;
+window.toggleSidebar = toggleSidebar;
