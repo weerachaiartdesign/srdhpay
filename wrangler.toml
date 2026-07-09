@@ -1,5 +1,3 @@
 name = "srdhpay"
-compatibility_date = "2026-07-08"
-
-[site]
-bucket = "./srdhpay" # ระบุโฟลเดอร์ที่เก็บไฟล์ Static ของคุณ
+main = "src/index.js"
+compatibility_date = "2026-06-01"
