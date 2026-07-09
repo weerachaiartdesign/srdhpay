@@ -1,36 +1,59 @@
 // js/app.js - Main application script
 
-import { auth, getCurrentUser, setCurrentUser, setToken, statusMap } from '.js/api.js';
+import { auth, getCurrentUser, setCurrentUser, setToken, statusMap } from './api.js';
 
 // ---- Component Loader ----
 async function loadComponent(selector, url) {
   try {
+    console.log(`Loading component: ${url}`);
     const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status} - ${response.statusText}`);
+    }
     const html = await response.text();
     const element = document.querySelector(selector);
     if (element) {
       element.innerHTML = html;
+      console.log(`Component loaded: ${url}`);
+    } else {
+      console.warn(`Selector "${selector}" not found for ${url}`);
     }
     return html;
   } catch (err) {
     console.error(`Failed to load component ${url}:`, err);
+    // แสดงข้อความแทน component ที่โหลดไม่ได้
+    const element = document.querySelector(selector);
+    if (element) {
+      element.innerHTML = `<div class="text-red-500 p-4 text-center">ไม่สามารถโหลด component (${url})</div>`;
+    }
+    throw err; // ส่งต่อ error ไปให้ caller จัดการ
   }
 }
 
 // Load header and sidebar
 export async function loadLayout() {
-  await loadComponent('#header-container', '/header.html');
-  await loadComponent('#sidebar-container', '/sidebar.html');
-  // After loading, setup dynamic parts
-  setupUserInfo();
-  setupDarkModeToggle();
-  highlightActiveMenu();
+  console.log('Loading layout...');
+  try {
+    await loadComponent('#header-container', '/header.html');
+    await loadComponent('#sidebar-container', '/sidebar.html');
+    setupUserInfo();
+    setupDarkModeToggle();
+    highlightActiveMenu();
+    console.log('Layout loaded successfully');
+  } catch (err) {
+    console.error('Layout loading failed:', err);
+    // แสดงข้อความแจ้งเตือนผู้ใช้
+    showToast('เกิดข้อผิดพลาดในการโหลดหน้าเว็บ กรุณารีเฟรช', 'error');
+    throw err;
+  }
 }
 
 // ---- Auth Guard ----
 export function requireAuth(redirect = true) {
   const user = getCurrentUser();
+  console.log('requireAuth - user:', user);
   if (!user) {
+    console.warn('No user found, redirecting to login');
     if (redirect && window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
       window.location.href = '/index.html';
     }
@@ -43,6 +66,7 @@ export function requireRole(allowedRoles, redirect = true) {
   const user = requireAuth(redirect);
   if (!user) return null;
   if (!allowedRoles.includes(user.role)) {
+    console.warn(`Role ${user.role} not allowed, redirecting`);
     if (redirect) {
       window.location.href = '/dashboard.html';
     }
@@ -56,11 +80,6 @@ export function toggleDarkMode() {
   const html = document.documentElement;
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
-  // Update user darkmode preference (if logged in)
-  const user = getCurrentUser();
-  if (user) {
-    // We'll update via API later
-  }
   updateDarkModeIcon();
 }
 
@@ -99,6 +118,7 @@ function setupDarkModeToggle() {
 // ---- User Info in Header ----
 function setupUserInfo() {
   const user = getCurrentUser();
+  console.log('setupUserInfo - user:', user);
   if (user) {
     const nameEl = document.getElementById('userName');
     const roleEl = document.getElementById('userRole');
@@ -143,7 +163,7 @@ export async function logout() {
   window.location.href = '/index.html';
 }
 
-// ---- Show loading overlay ----
+// ---- Loading overlay ----
 export function showLoading(message = 'กำลังโหลด...') {
   let overlay = document.getElementById('loadingOverlay');
   if (!overlay) {
@@ -168,7 +188,7 @@ export function hideLoading() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-// ---- Toast notification (using simple div, can use SweetAlert2) ----
+// ---- Toast notification ----
 export function showToast(message, type = 'success') {
   const colors = {
     success: 'bg-green-500',
@@ -177,13 +197,13 @@ export function showToast(message, type = 'success') {
     info: 'bg-blue-500',
   };
   const toast = document.createElement('div');
-  toast.className = `fixed top-4 right-4 ${colors[type] || 'bg-gray-500'} text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-500`;
+  toast.className = `fixed top-4 right-4 ${colors[type] || 'bg-gray-500'} text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-500 max-w-md`;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => {
     toast.classList.add('opacity-0');
     setTimeout(() => toast.remove(), 500);
-  }, 3000);
+  }, 4000);
 }
 
 // ---- Currency formatter ----
@@ -195,31 +215,51 @@ export function formatCurrency(amount) {
 export function formatThaiDate(dateStr) {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
   const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
   return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
 // ---- Initialize app ----
 export async function initApp() {
+  console.log('initApp called, path:', window.location.pathname);
   loadDarkModePreference();
-  // Load layout if we are not on login page (or if we want header/sidebar everywhere)
-  if (!window.location.pathname.includes('index.html')) {
-    await loadLayout();
+  
+  // ถ้าเป็นหน้า Login ไม่ต้องโหลด Layout
+  if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+    console.log('Login page, skipping layout');
+    return;
   }
-  // Auth guard for pages that require login
+
+  // โหลด Layout สำหรับหน้าอื่นๆ
+  try {
+    await loadLayout();
+    console.log('Layout loaded');
+  } catch (err) {
+    console.error('initApp layout error:', err);
+    // แสดงข้อความให้ผู้ใช้ทราบ
+    showToast('ไม่สามารถโหลดส่วนประกอบของหน้าได้ กรุณารีเฟรช', 'error');
+  }
+
+  // ตรวจสอบสิทธิ์เฉพาะหน้าอื่นที่ไม่ใช่ index
   const publicPages = ['index.html', ''];
   const current = window.location.pathname.split('/').pop();
   if (!publicPages.includes(current) && current !== '') {
     const user = requireAuth(true);
     if (user) {
-      // Optionally check permission for page
-      // We'll implement page-specific permission check later
+      console.log('Authenticated user:', user.email);
     }
   }
 }
 
 // Run on DOM ready
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM ready, calling initApp');
+  initApp();
+});
 
 // Expose logout globally
 window.logout = logout;
+window.showToast = showToast;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
