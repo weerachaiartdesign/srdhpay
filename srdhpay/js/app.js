@@ -21,12 +21,11 @@ async function loadComponent(selector, url) {
     return html;
   } catch (err) {
     console.error(`Failed to load component ${url}:`, err);
-    // แสดงข้อความแทน component ที่โหลดไม่ได้
     const element = document.querySelector(selector);
     if (element) {
       element.innerHTML = `<div class="text-red-500 p-4 text-center">ไม่สามารถโหลด component (${url})</div>`;
     }
-    throw err; // ส่งต่อ error ไปให้ caller จัดการ
+    throw err;
   }
 }
 
@@ -42,7 +41,6 @@ export async function loadLayout() {
     console.log('Layout loaded successfully');
   } catch (err) {
     console.error('Layout loading failed:', err);
-    // แสดงข้อความแจ้งเตือนผู้ใช้
     showToast('เกิดข้อผิดพลาดในการโหลดหน้าเว็บ กรุณารีเฟรช', 'error');
     throw err;
   }
@@ -54,7 +52,7 @@ export function requireAuth(redirect = true) {
   console.log('requireAuth - user:', user);
   if (!user) {
     console.warn('No user found, redirecting to login');
-    if (redirect && window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+    if (redirect && !window.location.pathname.includes('index.html')) {
       window.location.href = '/index.html';
     }
     return null;
@@ -81,6 +79,12 @@ export function toggleDarkMode() {
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
   updateDarkModeIcon();
+  // Update user preference if logged in
+  const user = getCurrentUser();
+  if (user) {
+    // Optionally update via API
+    // We'll handle this later
+  }
 }
 
 export function loadDarkModePreference() {
@@ -225,23 +229,19 @@ export async function initApp() {
   console.log('initApp called, path:', window.location.pathname);
   loadDarkModePreference();
   
-  // ถ้าเป็นหน้า Login ไม่ต้องโหลด Layout
   if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
     console.log('Login page, skipping layout');
     return;
   }
 
-  // โหลด Layout สำหรับหน้าอื่นๆ
   try {
     await loadLayout();
     console.log('Layout loaded');
   } catch (err) {
     console.error('initApp layout error:', err);
-    // แสดงข้อความให้ผู้ใช้ทราบ
     showToast('ไม่สามารถโหลดส่วนประกอบของหน้าได้ กรุณารีเฟรช', 'error');
   }
 
-  // ตรวจสอบสิทธิ์เฉพาะหน้าอื่นที่ไม่ใช่ index
   const publicPages = ['index.html', ''];
   const current = window.location.pathname.split('/').pop();
   if (!publicPages.includes(current) && current !== '') {
