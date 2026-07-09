@@ -1,13 +1,53 @@
 {
-  "name": "SRDH PAY - ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร",
+  "name": "ทะเบียนเบิกจ่ายเงิน รพส.",
   "short_name": "SRDH PAY",
+  "description": "ระบบทะเบียนฎีกาเบิกจ่ายเงิน โรงพยาบาลสิรินธร",
+  "version": "0200",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#FAF8FF",
-  "theme_color": "#9F7AEA",
+  "background_color": "#F3E8FF",
+  "theme_color": "#7C3AED",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "th-TH",
+  "dir": "ltr",
   "icons": [
-    { "src": "icons/srdhpay-152.png", "sizes": "152x152", "type": "image/png" },
-    { "src": "icons/srdhpay-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/srdhpay-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
+    {
+      "src": "icons/register_acc-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/register_acc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/register_acc-152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/register_acc-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/register_acc-touch-icon-ipad.png",
+      "sizes": "167x167",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/register_acc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "prefer_related_applications": false
 }
