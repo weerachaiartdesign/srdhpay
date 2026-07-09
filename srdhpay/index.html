@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SRDH PAY - ระบบทะเบียนเบิกจ่ายเงิน</title>
-  <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -35,7 +34,7 @@
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสผ่าน</label>
         <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white" placeholder="••••••••">
       </div>
-      <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition duration-200 flex items-center justify-center">
+      <button type="submit" id="loginBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition duration-200 flex items-center justify-center">
         เข้าสู่ระบบ
       </button>
     </form>
@@ -51,54 +50,90 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Loading Overlay -->
+  <div id="loginLoading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center shadow-xl">
+      <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="mt-3 text-gray-700 dark:text-gray-300" id="loginLoadingText">กำลังเข้าสู่ระบบ...</p>
+    </div>
+  </div>
 
   <script type="module">
     import { auth, setToken, setCurrentUser } from './js/api.js';
-    import { showToast, showLoading, hideLoading } from './js/app.js';
 
     const form = document.getElementById('loginForm');
     const guestBtn = document.getElementById('guestBtn');
+    const loadingDiv = document.getElementById('loginLoading');
+    const loadingText = document.getElementById('loginLoadingText');
+
+    function showLoginLoading(msg = 'กำลังเข้าสู่ระบบ...') {
+      loadingText.textContent = msg;
+      loadingDiv.classList.remove('hidden');
+    }
+
+    function hideLoginLoading() {
+      loadingDiv.classList.add('hidden');
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
 
-      showLoading('กำลังเข้าสู่ระบบ...');
+      console.log('Login attempt:', email);
+      showLoginLoading('กำลังเข้าสู่ระบบ...');
+
       try {
         const result = await auth.login(email, password);
+        console.log('Login result:', result);
+
         if (result.success) {
           setToken(result.data.token);
           setCurrentUser(result.data);
-          showToast('ยินดีต้อนรับ ' + result.data.username, 'success');
-          // Redirect to dashboard
-          window.location.href = '/dashboard.html';
+          console.log('User saved:', result.data);
+          // แสดง Toast
+          const toast = document.createElement('div');
+          toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-500';
+          toast.textContent = 'ยินดีต้อนรับ ' + result.data.username;
+          document.body.appendChild(toast);
+          setTimeout(() => {
+            toast.classList.add('opacity-0');
+            setTimeout(() => toast.remove(), 500);
+          }, 2000);
+
+          // Redirect
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 500);
         } else {
-          showToast(result.error || 'เข้าสู่ระบบล้มเหลว', 'error');
+          hideLoginLoading();
+          alert(result.error || 'เข้าสู่ระบบล้มเหลว');
         }
       } catch (err) {
-        showToast(err.message || 'เกิดข้อผิดพลาด', 'error');
-      } finally {
-        hideLoading();
+        console.error('Login error:', err);
+        hideLoginLoading();
+        alert('เกิดข้อผิดพลาด: ' + err.message);
       }
     });
 
     guestBtn.addEventListener('click', async () => {
-      showLoading('กำลังสร้างเซสชันผู้เยี่ยมชม...');
+      console.log('Guest login');
+      showLoginLoading('กำลังสร้างเซสชันผู้เยี่ยมชม...');
       try {
         const result = await auth.guest();
+        console.log('Guest result:', result);
         if (result.success) {
           setToken(result.data.token);
           setCurrentUser(result.data);
-          showToast('เข้าสู่ระบบแบบผู้เยี่ยมชม', 'info');
           window.location.href = '/dashboard.html';
+        } else {
+          hideLoginLoading();
+          alert(result.error || 'ไม่สามารถเข้าสู่ระบบแบบผู้เยี่ยมชม');
         }
       } catch (err) {
-        showToast(err.message || 'เกิดข้อผิดพลาด', 'error');
-      } finally {
-        hideLoading();
+        console.error('Guest error:', err);
+        hideLoginLoading();
+        alert('เกิดข้อผิดพลาด: ' + err.message);
       }
     });
   </script>
