@@ -1,6 +1,6 @@
 // js/app.js - Main application script
 
-import { auth, getCurrentUser, setCurrentUser, setToken, statusMap } from './api.js';
+import { auth, getCurrentUser, setCurrentUser, setToken, statusMap } from '.js/api.js';
 
 // ---- Component Loader ----
 async function loadComponent(selector, url) {
