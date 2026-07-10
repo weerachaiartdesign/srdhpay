@@ -7,6 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -134,7 +135,7 @@
   </div>
 
   <script type="module">
-    import { loadLayout, requireAuth, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
+    import { loadLayout, requireAuth, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
     import { register, settings, statusMap, statusColors } from './js/api.js';
 
     let currentData = [];
@@ -144,15 +145,26 @@
     let moneyTypes = [];
     let depts = [];
 
+    // ---- Load Filters (รองรับ Guest) ----
     async function loadFilters() {
       try {
+        const user = getCurrentUser();
+        // Guest ไม่มีสิทธิ์อ่าน settings ให้ข้าม
+        if (user?.role === 'guest') {
+          console.log('Guest mode: skip loading filters');
+          return;
+        }
+
         const [mtRes, deptRes] = await Promise.all([
           settings.get('money_type'),
           settings.get('dept'),
         ]);
+        
         if (mtRes.success) {
           moneyTypes = mtRes.data;
           const select = document.getElementById('filterMoneyType');
+          // เก็บ option default ไว้ก่อน
+          select.innerHTML = '<option value="">ทุกประเภทเงิน</option>';
           moneyTypes.forEach(mt => {
             const opt = document.createElement('option');
             opt.value = mt.name;
@@ -160,9 +172,11 @@
             select.appendChild(opt);
           });
         }
+        
         if (deptRes.success) {
           depts = deptRes.data;
           const select = document.getElementById('filterDept');
+          select.innerHTML = '<option value="">ทุกหน่วยงาน</option>';
           depts.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d.name;
@@ -171,10 +185,12 @@
           });
         }
       } catch (e) {
-        console.error('Failed to load filters:', e);
+        // Guest หรือ error อื่นๆ ให้ log เฉยๆ ไม่ต้องแจ้งผู้ใช้
+        console.log('Load filters skipped or failed:', e.message);
       }
     }
 
+    // ---- Load Data ----
     async function loadData() {
       showLoading('กำลังโหลดข้อมูล...');
       try {
@@ -213,6 +229,7 @@
       }
     }
 
+    // ---- Render Table ----
     function renderTable() {
       const tbody = document.getElementById('tableBody');
       if (!currentData.length) {
@@ -250,6 +267,7 @@
       tbody.innerHTML = html;
     }
 
+    // ---- Render Cards (Mobile) ----
     function renderCards() {
       const container = document.getElementById('cardContainer');
       if (!currentData.length) {
@@ -289,6 +307,7 @@
       container.innerHTML = html;
     }
 
+    // ---- Render Pagination ----
     function renderPagination() {
       const totalPages = Math.ceil(totalItems / currentLimit);
       const paginationHtml = `
@@ -303,6 +322,7 @@
       document.getElementById('cardPagination').innerHTML = paginationHtml;
     }
 
+    // ---- Go to Page ----
     window.goToPage = function(page) {
       if (page < 1) return;
       const totalPages = Math.ceil(totalItems / currentLimit);
@@ -311,6 +331,7 @@
       loadData();
     };
 
+    // ---- Show Detail Popup ----
     window.showDetail = async function(uuid) {
       const item = currentData.find(d => d.uuid === uuid);
       if (!item) return;
@@ -354,11 +375,12 @@
       if (e.target === this) closeDetail();
     });
 
-    // Event listeners
+    // ---- Event Listeners ----
     document.getElementById('searchBtn').addEventListener('click', () => {
       currentPage = 1;
       loadData();
     });
+    
     document.getElementById('clearBtn').addEventListener('click', () => {
       document.getElementById('searchInput').value = '';
       document.getElementById('filterMoneyType').value = '';
@@ -367,10 +389,12 @@
       currentPage = 1;
       loadData();
     });
+    
     document.getElementById('limitSelect').addEventListener('change', () => {
       currentPage = 1;
       loadData();
     });
+    
     document.getElementById('sortSelect').addEventListener('change', loadData);
 
     // Enter key for search
@@ -381,7 +405,7 @@
       }
     });
 
-    // Init
+    // ---- Init ----
     const user = requireAuth();
     if (user) {
       await loadLayout();
