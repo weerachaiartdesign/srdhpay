@@ -1,4 +1,4 @@
-// js/app.js - Main application script (แก้ไขเพิ่ม Hamburger, ปรับปรุง auth guard)
+// js/app.js - Main application script
 
 import { auth, getCurrentUser, setCurrentUser, setToken, statusMap, getToken } from './api.js';
 
@@ -29,7 +29,7 @@ async function loadComponent(selector, url) {
   }
 }
 
-// ---- Load header and sidebar ----
+// Load header and sidebar
 export async function loadLayout() {
   console.log('Loading layout...');
   try {
@@ -53,11 +53,6 @@ export function toggleSidebar() {
   if (sidebar) {
     sidebar.classList.toggle('hidden');
     sidebar.classList.toggle('block');
-    // เปลี่ยนเป็น md:block เมื่อหน้าจอใหญ่
-    if (window.innerWidth >= 768) {
-      sidebar.classList.remove('hidden');
-      sidebar.classList.add('block');
-    }
   }
 }
 
@@ -65,18 +60,6 @@ function setupHamburger() {
   const btn = document.getElementById('hamburgerBtn');
   if (btn) {
     btn.addEventListener('click', toggleSidebar);
-    // เมื่อหน้าจอเปลี่ยนขนาด ให้แสดง sidebar อัตโนมัติถ้าจอใหญ่
-    window.addEventListener('resize', () => {
-      const sidebar = document.getElementById('sidebar-container');
-      if (window.innerWidth >= 768 && sidebar) {
-        sidebar.classList.remove('hidden');
-        sidebar.classList.add('block');
-      } else if (window.innerWidth < 768 && sidebar) {
-        // ปิดไว้ให้ user กดเปิดเอง
-        sidebar.classList.add('hidden');
-        sidebar.classList.remove('block');
-      }
-    });
   }
 }
 
@@ -272,6 +255,8 @@ export async function initApp() {
   } catch (err) {
     console.error('initApp layout error:', err);
     showToast('ไม่สามารถโหลดส่วนประกอบของหน้าได้ กรุณารีเฟรช', 'error');
+    // ถึงแม้ loadLayout จะล้มเหลว ระบบก็ยังพยายามทำงานต่อ
+    // แต่ควรแจ้งผู้ใช้
   }
 
   const publicPages = ['index.html', ''];
@@ -284,15 +269,15 @@ export async function initApp() {
   }
 }
 
-// ---- Expose functions globally ----
+// Run on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM ready, calling initApp');
+  initApp();
+});
+
+// Expose functions globally
 window.logout = logout;
 window.showToast = showToast;
 window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.toggleSidebar = toggleSidebar;
-
-// ---- Auto-run on DOM ready ----
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM ready, calling initApp');
-  initApp();
-});
