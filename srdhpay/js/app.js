@@ -33,9 +33,9 @@ async function loadComponent(selector, url) {
 export async function loadLayout() {
   console.log('[loadLayout] Starting...');
   try {
-    // ใช้ path ที่ถูกต้อง (relative to root หรือ absolute)
-    await loadComponent('#header-container', './header.html');
-    await loadComponent('#sidebar-container', './sidebar.html');
+    // ✅ ใช้ absolute path เพื่อโหลดจาก root
+    await loadComponent('#header-container', '/header.html');
+    await loadComponent('#sidebar-container', '/sidebar.html');
     setupUserInfo();
     setupDarkModeToggle();
     highlightActiveMenu();
