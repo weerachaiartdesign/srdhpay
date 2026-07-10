@@ -39,6 +39,8 @@ export async function loadLayout() {
     setupDarkModeToggle();
     highlightActiveMenu();
     setupHamburger();
+    // เรียกใช้ฟังก์ชันนี้หลังจาก sidebar โหลดเสร็จ
+    initSidebarVisibility();
     console.log('Layout loaded successfully');
   } catch (err) {
     console.error('Layout loading failed:', err);
@@ -46,7 +48,6 @@ export async function loadLayout() {
     throw err;
   }
 }
-
 // ---- Hamburger Toggle ----
 export function toggleSidebar() {
   const sidebar = document.getElementById('sidebar-container');
