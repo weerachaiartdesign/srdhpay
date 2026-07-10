@@ -1,3 +1,4 @@
+<!-- verify.html (เพิ่ม import settings) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -31,10 +32,10 @@
             <p class="text-gray-600 dark:text-gray-400">บันทึก การตรวจสอบ การแก้ไข และรับคืน</p>
           </div>
           <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
-            <button id="editBtn" class="btn btn-primary bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">แก้ไข</button>
-            <button id="returnBtn" class="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">รับคืน</button>
-            <button id="passBtn" class="btn btn-primary bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">ตรวจผ่าน</button>
-            <button id="printEditBtn" class="btn btn-secondary bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์ใบส่งแก้ไข</button>
+            <button id="editBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">แก้ไข</button>
+            <button id="returnBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">รับคืน</button>
+            <button id="passBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">ตรวจผ่าน</button>
+            <button id="printEditBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์ใบส่งแก้ไข</button>
           </div>
         </div>
 
@@ -56,8 +57,8 @@
             <input id="filterVendor" type="text" placeholder="ชื่อเจ้าหนี้/บริษัท" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
           </div>
           <div class="mt-3 flex gap-2">
-            <button id="searchBtn" class="btn btn-primary bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
-            <button id="clearBtn" class="btn btn-secondary bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
+            <button id="searchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
+            <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
           </div>
         </div>
 
@@ -90,7 +91,7 @@
   </div>
 
   <script type="module">
-    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
+    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
     import { register, settings, statusMap, statusColors } from './js/api.js';
 
     let currentData = [];
@@ -126,6 +127,7 @@
         }
       } catch (e) {
         console.error('Failed to load filters:', e);
+        showToast('โหลดข้อมูลไม่สำเร็จ', 'error');
       }
     }
 
