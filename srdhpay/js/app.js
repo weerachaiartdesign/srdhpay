@@ -5,7 +5,7 @@ import { auth, getCurrentUser, setCurrentUser, setToken, statusMap, getToken } f
 // ---- Component Loader ----
 async function loadComponent(selector, url) {
   try {
-    console.log(`Loading component: ${url}`);
+    console.log(`[loadComponent] Loading: ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status} - ${response.statusText}`);
@@ -14,13 +14,13 @@ async function loadComponent(selector, url) {
     const element = document.querySelector(selector);
     if (element) {
       element.innerHTML = html;
-      console.log(`Component loaded: ${url}`);
+      console.log(`[loadComponent] Success: ${url} -> ${selector}`);
     } else {
-      console.warn(`Selector "${selector}" not found for ${url}`);
+      console.warn(`[loadComponent] Selector "${selector}" not found for ${url}`);
     }
     return html;
   } catch (err) {
-    console.error(`Failed to load component ${url}:`, err);
+    console.error(`[loadComponent] Failed to load ${url}:`, err);
     const element = document.querySelector(selector);
     if (element) {
       element.innerHTML = `<div class="text-red-500 p-4 text-center">ไม่สามารถโหลด component (${url})</div>`;
@@ -29,20 +29,21 @@ async function loadComponent(selector, url) {
   }
 }
 
-// ---- Load Layout (ประกาศครั้งเดียว) ----
+// ---- Load Layout ----
 export async function loadLayout() {
-  console.log('Loading layout...');
+  console.log('[loadLayout] Starting...');
   try {
-    await loadComponent('#header-container', '/header.html');
-    await loadComponent('#sidebar-container', '/sidebar.html');
+    // ใช้ path ที่ถูกต้อง (relative to root หรือ absolute)
+    await loadComponent('#header-container', './header.html');
+    await loadComponent('#sidebar-container', './sidebar.html');
     setupUserInfo();
     setupDarkModeToggle();
     highlightActiveMenu();
     setupHamburger();
     initSidebarVisibility();
-    console.log('Layout loaded successfully');
+    console.log('[loadLayout] Completed successfully');
   } catch (err) {
-    console.error('Layout loading failed:', err);
+    console.error('[loadLayout] Failed:', err);
     showToast('เกิดข้อผิดพลาดในการโหลดหน้าเว็บ กรุณารีเฟรช', 'error');
     throw err;
   }
@@ -311,6 +312,6 @@ window.toggleSidebar = toggleSidebar;
 
 // ---- DOM Ready ----
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM ready, calling initApp');
+  console.log('[DOM ready] Calling initApp');
   initApp();
 });
