@@ -6,449 +6,437 @@
   <title>ตั้งค่าระบบ - SRDH PAY</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body { font-family: 'Prompt', sans-serif; }
-  </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
-  <div id="header-container"></div>
+<body class="min-h-screen">
+  <div id="header-placeholder"></div>
   <div class="flex">
-    <div id="sidebar-container"></div>
-    <main class="flex-1 p-4 md:p-6 overflow-y-auto ml-0 md:ml-64">
-      <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าระบบ</h1>
-            <p class="text-gray-600 dark:text-gray-400">System Management</p>
-          </div>
-        </div>
+    <div id="sidebar-placeholder"></div>
 
-        <!-- Tabs -->
-        <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-4 gap-1">
-          <button class="system-tab px-3 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 dark:text-purple-400 dark:border-purple-400" data-tab="permission">Permission</button>
-          <button class="system-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="session">Session</button>
-          <button class="system-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="audit">Audit Logs</button>
-          <button class="system-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="telegram">Telegram</button>
-          <button class="system-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="retention">Data Retention</button>
-        </div>
-
-        <!-- Content -->
-        <div id="systemTabContent" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <!-- Rendered by JS -->
-        </div>
+    <main class="flex-1 p-4 md:p-6 max-w-full overflow-x-hidden space-y-4">
+      <div>
+        <h2 class="font-display font-bold text-xl">ตั้งค่าระบบ</h2>
+        <p class="text-sm text-[var(--color-text-muted)]">System Management (เฉพาะ Admin)</p>
       </div>
+
+      <!-- Tab Nav -->
+      <div class="flex gap-1 flex-wrap border-b border-[var(--color-border)]">
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="perm">Permission Matrix</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="session">Session Settings</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="audit">Audit Logs</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="telegram">Telegram</button>
+        <button class="tab-btn px-3 py-2 text-sm font-medium border-b-2 border-transparent whitespace-nowrap" data-tab="retention">Data Retention</button>
+      </div>
+
+      <!-- ===== Permission Matrix ===== -->
+      <section id="panel-perm" class="hidden space-y-3">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <h3 class="font-display font-semibold">Permission Matrix</h3>
+          <p class="text-xs text-[var(--color-text-muted)]">คลิก checkbox แต่ละช่องเพื่อเปิด/ปิดสิทธิ์ กด "บันทึกทั้งหมด" เมื่อแก้ไขเสร็จ</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th class="text-center">Admin</th>
+                <th class="text-center">Manager</th>
+                <th class="text-center">Editor</th>
+                <th class="text-center">Checker</th>
+                <th class="text-center">Staff</th>
+                <th class="text-center">Guest</th>
+              </tr>
+            </thead>
+            <tbody id="permTableBody">
+              <tr><td colspan="7"><div class="skeleton h-7 my-1"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex gap-2">
+          <button id="btnSavePerm" class="btn btn-primary">บันทึกทั้งหมด</button>
+          <button id="btnResetPerm" class="btn btn-outline">รีเซ็ตเป็นค่าเริ่มต้น</button>
+        </div>
+        <p class="text-xs text-[var(--color-text-muted)]">⚠ สิทธิ์ที่แก้จะมีผลทันที แต่ Admin ยังคงเข้าได้ทุกหน้าเสมอเพื่อป้องกันล็อคตัวเอง</p>
+      </section>
+
+      <!-- ===== Session Settings ===== -->
+      <section id="panel-session" class="hidden card p-5 max-w-lg space-y-4">
+        <h3 class="font-display font-semibold">Session Settings</h3>
+        <div>
+          <label class="block text-sm font-medium mb-1">Guest Timeout (ชั่วโมง) <span class="text-xs text-[var(--color-text-muted)]">default = 2</span></label>
+          <input id="ss_guest_timeout" type="number" min="1" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Inactivity Logout (นาที) <span class="text-xs text-[var(--color-text-muted)]">default = 30</span></label>
+          <input id="ss_inactivity" type="number" min="1" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Token Age (ชั่วโมง) <span class="text-xs text-[var(--color-text-muted)]">default = 12</span></label>
+          <input id="ss_token_age" type="number" min="1" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Max Login Retry <span class="text-xs text-[var(--color-text-muted)]">default = 5</span></label>
+          <input id="ss_max_retry" type="number" min="1" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent">
+        </div>
+        <button id="btnSaveSession" class="btn btn-primary">บันทึก</button>
+      </section>
+
+      <!-- ===== Audit Logs ===== -->
+      <section id="panel-audit" class="hidden space-y-3">
+        <div class="flex flex-wrap gap-2 items-center justify-between">
+          <h3 class="font-display font-semibold">Audit Logs</h3>
+          <button id="btnExportLogs" class="btn btn-outline text-sm">Export Logs</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <select id="auditModule" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+            <option value="">Module: ทั้งหมด</option>
+            <option value="auth">auth</option>
+            <option value="register">register</option>
+            <option value="verify">verify</option>
+            <option value="approve">approve</option>
+            <option value="payment">payment</option>
+            <option value="settings">settings</option>
+            <option value="system">system</option>
+          </select>
+          <input type="date" id="auditStart" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+          <input type="date" id="auditEnd" class="px-3 py-2 rounded-lg border border-[var(--color-border)] bg-transparent text-sm">
+          <button id="btnLoadAudit" class="btn btn-primary text-sm">โหลด</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>Action</th><th>Module</th><th>รายละเอียด</th></tr></thead>
+            <tbody id="auditBody"><tr><td colspan="5" class="text-center py-10 text-[var(--color-text-muted)]">กดปุ่ม "โหลด" เพื่อแสดงข้อมูล</td></tr></tbody>
+          </table>
+        </div>
+        <div id="auditPagination" class="flex justify-between text-sm items-center"></div>
+      </section>
+
+      <!-- ===== Telegram ===== -->
+      <section id="panel-telegram" class="hidden card p-5 max-w-lg space-y-4">
+        <h3 class="font-display font-semibold">Telegram Notification</h3>
+        <div class="flex items-center gap-3">
+          <input type="checkbox" id="tg_enabled" class="w-5 h-5">
+          <label for="tg_enabled" class="text-sm font-medium">เปิดใช้งาน Telegram Notification</label>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Bot Token</label>
+          <input id="tg_bot_token" type="text" placeholder="xxxxxxxx:xxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent font-mono text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Chat ID</label>
+          <input id="tg_chat_id" type="text" placeholder="-100xxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent font-mono text-sm">
+        </div>
+        <div class="pt-2 border-t border-[var(--color-border)]">
+          <p class="text-sm font-medium mb-2">เหตุการณ์ที่แจ้งเตือน</p>
+          <div id="tgEventToggles" class="grid grid-cols-2 gap-y-1.5 text-sm"></div>
+        </div>
+        <button id="btnSaveTelegram" class="btn btn-primary">บันทึก</button>
+      </section>
+
+      <!-- ===== Data Retention ===== -->
+      <section id="panel-retention" class="hidden card p-5 max-w-lg space-y-4">
+        <h3 class="font-display font-semibold">Data Retention</h3>
+        <div class="flex items-center gap-3">
+          <input type="checkbox" id="rt_enabled" class="w-5 h-5">
+          <label for="rt_enabled" class="text-sm font-medium">เปิดใช้งาน Data Retention</label>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">ระยะเวลาเก็บข้อมูล (ปี)</label>
+          <input id="rt_years" type="number" min="1" max="20" class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent">
+        </div>
+        <p class="text-xs text-[var(--color-text-muted)]">ระบบจะสำรองข้อมูลอัตโนมัติก่อนลบเสมอ และแสดง Preview จำนวนรายการที่จะถูกลบก่อนยืนยัน</p>
+        <div class="flex gap-2 flex-wrap">
+          <button id="btnSaveRetention" class="btn btn-primary">บันทึกการตั้งค่า</button>
+          <button id="btnPreviewRetention" class="btn btn-outline">Preview ก่อนลบ</button>
+          <button id="btnRunRetention" class="btn btn-danger">ดำเนินการลบ</button>
+        </div>
+      </section>
     </main>
   </div>
 
-  <script type="module">
-    import { loadLayout, requireRole, formatThaiDate, showToast, showLoading, hideLoading } from './js/app.js';
-    import { system, audit } from './js/api.js';
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    if (App.requireLogin()) { App.loadComponents(); init(); }
 
-    let currentTab = 'permission';
+    const MODULE_LABEL = {
+      dashboard: 'Dashboard', list: 'ทะเบียนเบิกจ่าย', import: 'นำเข้าข้อมูล',
+      receive: 'รับเข้าระบบ', verify: 'บันทึกการตรวจสอบ', approve: 'บันทึกเสนอ/อนุมัติ',
+      payment: 'บันทึกการจ่าย', report: 'รายงาน', auth_profile: 'ข้อมูลส่วนตัว',
+      auth_manage: 'จัดการผู้ใช้', settings: 'ตั้งค่าโปรแกรม', system: 'ตั้งค่าระบบ'
+    };
+    const TG_EVENTS = {
+      tg_notify_import: 'Import สำเร็จ', tg_notify_receive: 'รับเข้าระบบ',
+      tg_notify_assign_editor: 'กำหนดผู้ตรวจ', tg_notify_edit: 'ส่งแก้ไข',
+      tg_notify_return: 'รับคืน', tg_notify_pass: 'ตรวจผ่าน', tg_notify_propose: 'เสนอ',
+      tg_notify_approve: 'อนุมัติ', tg_notify_pay: 'จ่ายเช็ค', tg_notify_cancel: 'ยกเลิก',
+      tg_notify_recovery: 'กู้คืน'
+    };
 
-    async function loadSystemTab(tab) {
-      currentTab = tab;
-      const container = document.getElementById('systemTabContent');
-      showLoading('กำลังโหลด...');
-      try {
-        switch (tab) {
-          case 'permission': await renderPermission(container); break;
-          case 'session': await renderSession(container); break;
-          case 'audit': await renderAudit(container); break;
-          case 'telegram': await renderTelegram(container); break;
-          case 'retention': await renderRetention(container); break;
-          default: container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">เลือกแท็บ</p>';
-        }
-      } catch (err) {
-        showToast(err.message, 'error');
-        container.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาด</p>';
-      } finally {
-        hideLoading();
-      }
+    const DEFAULT_PERM = {
+      dashboard:    { admin:1, manager:1, editor:1, checker:1, staff:1, guest:1 },
+      list:         { admin:1, manager:1, editor:1, checker:1, staff:1, guest:1 },
+      import:       { admin:1, manager:1, editor:0, checker:0, staff:1, guest:0 },
+      receive:      { admin:1, manager:1, editor:0, checker:0, staff:0, guest:0 },
+      verify:       { admin:1, manager:1, editor:1, checker:0, staff:0, guest:0 },
+      approve:      { admin:1, manager:1, editor:0, checker:0, staff:0, guest:0 },
+      payment:      { admin:1, manager:1, editor:0, checker:1, staff:0, guest:0 },
+      report:       { admin:1, manager:1, editor:0, checker:0, staff:0, guest:0 },
+      auth_profile: { admin:1, manager:1, editor:1, checker:1, staff:1, guest:0 },
+      auth_manage:  { admin:1, manager:1, editor:0, checker:0, staff:0, guest:0 },
+      settings:     { admin:1, manager:1, editor:0, checker:0, staff:0, guest:0 },
+      system:       { admin:1, manager:0, editor:0, checker:0, staff:0, guest:0 }
+    };
+
+    let permData = [];
+    let auditPage = 1; const AUDIT_PAGE = 30;
+
+    function init() {
+      bindTabs();
+      document.querySelector('[data-tab="perm"]').click();
     }
 
-    // Permission
-    async function renderPermission(container) {
-      const res = await system.permission.get();
-      if (!res.success) throw new Error(res.error);
-      const list = res.data || [];
-      let html = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Permission Matrix</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead class="bg-purple-50 dark:bg-purple-900/30">
-              <tr>
-                <th class="px-3 py-2 text-left">Module</th>
-                <th class="px-3 py-2 text-center">Admin</th>
-                <th class="px-3 py-2 text-center">Manager</th>
-                <th class="px-3 py-2 text-center">Editor</th>
-                <th class="px-3 py-2 text-center">Checker</th>
-                <th class="px-3 py-2 text-center">Staff</th>
-                <th class="px-3 py-2 text-center">Guest</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-      const roles = ['admin', 'manager', 'editor', 'checker', 'staff', 'guest'];
-      for (const p of list) {
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2 font-medium">${p.module}</td>
-          ${roles.map(r => `
-            <td class="px-3 py-2 text-center">
-              <input type="checkbox" class="perm-checkbox" data-id="${p.id}" data-role="${r}" ${p[r] === 1 ? 'checked' : ''}>
-            </td>
-          `).join('')}
-        </tr>`;
-      }
-      html += `</tbody></table>
-        <button id="savePermBtn" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก Permission</button>
-        </div>`;
-      container.innerHTML = html;
-
-      document.getElementById('savePermBtn').addEventListener('click', async () => {
-        const checkboxes = container.querySelectorAll('.perm-checkbox');
-        const updates = {};
-        for (const cb of checkboxes) {
-          const id = parseInt(cb.dataset.id);
-          const role = cb.dataset.role;
-          if (!updates[id]) updates[id] = { id };
-          updates[id][role] = cb.checked ? 1 : 0;
-        }
-        showLoading('กำลังบันทึก...');
-        try {
-          for (const id in updates) {
-            await system.permission.update(parseInt(id), updates[id]);
-          }
-          showToast('บันทึก Permission สำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-    }
-
-    // Session
-    async function renderSession(container) {
-      const res = await system.session.get();
-      if (!res.success) throw new Error(res.error);
-      const data = res.data || [];
-      const map = {};
-      data.forEach(s => map[s.key] = s.value);
-
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Session Settings</h3>
-        <div class="space-y-4 max-w-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Guest Timeout (ชั่วโมง)</label>
-            <input type="number" id="sessionGuestTimeout" value="${map.session_guest_timeout_hours || 2}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Inactivity Logout (นาที)</label>
-            <input type="number" id="sessionInactivity" value="${map.session_inactivity_minutes || 30}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Token Age (ชั่วโมง)</label>
-            <input type="number" id="sessionTokenAge" value="${map.session_token_age_hours || 12}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Max Login Retry</label>
-            <input type="number" id="sessionMaxRetry" value="${map.session_max_login_retry || 5}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <button id="saveSessionBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก</button>
-        </div>
-      `;
-
-      document.getElementById('saveSessionBtn').addEventListener('click', async () => {
-        const updates = [
-          { key: 'session_guest_timeout_hours', value: document.getElementById('sessionGuestTimeout').value },
-          { key: 'session_inactivity_minutes', value: document.getElementById('sessionInactivity').value },
-          { key: 'session_token_age_hours', value: document.getElementById('sessionTokenAge').value },
-          { key: 'session_max_login_retry', value: document.getElementById('sessionMaxRetry').value },
-        ];
-        showLoading('กำลังบันทึก...');
-        try {
-          for (const u of updates) {
-            await system.session.update(u.key, u.value);
-          }
-          showToast('บันทึก Session Settings สำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-    }
-
-    // Audit
-    async function renderAudit(container) {
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Audit Logs</h3>
-        <div class="flex flex-wrap gap-3 mb-4">
-          <select id="auditModule" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-            <option value="">ทุกโมดูล</option>
-            <option value="register">Register</option>
-            <option value="auth">Auth</option>
-            <option value="system">System</option>
-            <option value="settings">Settings</option>
-          </select>
-          <select id="auditAction" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-            <option value="">ทุก Action</option>
-            <option value="import">Import</option>
-            <option value="receive">Receive</option>
-            <option value="assign_editor">Assign Editor</option>
-            <option value="edit_send">Edit Send</option>
-            <option value="return">Return</option>
-            <option value="pass">Pass</option>
-            <option value="propose">Propose</option>
-            <option value="approve">Approve</option>
-            <option value="pay">Pay</option>
-            <option value="cancel">Cancel</option>
-            <option value="recover">Recover</option>
-            <option value="update">Update</option>
-            <option value="admin_override_paid">Admin Override Paid</option>
-          </select>
-          <button id="auditSearchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
-          <button id="auditClearBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
-          <button id="auditExportBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition">Export CSV</button>
-        </div>
-        <div id="auditResult" class="overflow-x-auto">
-          <p class="text-gray-500 dark:text-gray-400">กรุณาค้นหา</p>
-        </div>
-      `;
-
-      document.getElementById('auditSearchBtn').addEventListener('click', async () => {
-        const module = document.getElementById('auditModule').value;
-        const action = document.getElementById('auditAction').value;
-        showLoading('กำลังค้นหา...');
-        try {
-          const params = {};
-          if (module) params.module = module;
-          if (action) params.action = action;
-          const res = await audit.list(params);
-          if (!res.success) throw new Error(res.error);
-          renderAuditResult(res.data.data || [], res.data.pagination);
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-
-      document.getElementById('auditClearBtn').addEventListener('click', () => {
-        document.getElementById('auditModule').value = '';
-        document.getElementById('auditAction').value = '';
-        document.getElementById('auditResult').innerHTML = '<p class="text-gray-500 dark:text-gray-400">กรุณาค้นหา</p>';
-      });
-
-      document.getElementById('auditExportBtn').addEventListener('click', () => {
-        // Simple export: convert table to CSV
-        const table = document.querySelector('#auditResult table');
-        if (!table) { showToast('ไม่มีข้อมูล', 'error'); return; }
-        let csv = 'Time,User,Action,Detail\n';
-        const rows = table.querySelectorAll('tbody tr');
-        for (const row of rows) {
-          const cells = row.querySelectorAll('td');
-          csv += `${cells[0].textContent},${cells[1].textContent},${cells[2].textContent},${cells[3].textContent}\n`;
-        }
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `audit_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showToast('Export CSV สำเร็จ', 'success');
-      });
-    }
-
-    function renderAuditResult(data, pagination) {
-      const container = document.getElementById('auditResult');
-      if (!data || !data.length) {
-        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</p>';
-        return;
-      }
-      let html = `<table class="w-full text-sm">
-        <thead class="bg-purple-50 dark:bg-purple-900/30">
-          <tr>
-            <th class="px-3 py-2 text-left">Time</th>
-            <th class="px-3 py-2 text-left">User</th>
-            <th class="px-3 py-2 text-left">Action</th>
-            <th class="px-3 py-2 text-left">Detail</th>
-          </tr>
-        </thead>
-        <tbody>
-      `;
-      for (const item of data) {
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2">${formatThaiDate(item.time)}</td>
-          <td class="px-3 py-2">${item.username || item.email || '-'}</td>
-          <td class="px-3 py-2">${item.action || '-'}</td>
-          <td class="px-3 py-2">${item.detail || '-'}</td>
-        </tr>`;
-      }
-      html += `</tbody></table>`;
-      if (pagination) {
-        html += `<div class="mt-3 text-sm text-gray-500 dark:text-gray-400">หน้า ${pagination.page} / ${Math.ceil(pagination.total / pagination.limit)} (ทั้งหมด ${pagination.total} รายการ)</div>`;
-      }
-      container.innerHTML = html;
-    }
-
-    // Telegram
-    async function renderTelegram(container) {
-      const res = await system.telegram.get();
-      if (!res.success) throw new Error(res.error);
-      const data = res.data || [];
-      const map = {};
-      data.forEach(s => map[s.key] = s.value);
-
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Telegram Notification</h3>
-        <div class="space-y-4 max-w-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">เปิดใช้งาน</label>
-            <select id="tgEnabled" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
-              <option value="1" ${map.telegram_enabled === '1' ? 'selected' : ''}>เปิด</option>
-              <option value="0" ${map.telegram_enabled !== '1' ? 'selected' : ''}>ปิด</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bot Token</label>
-            <input type="text" id="tgBotToken" value="${map.telegram_bot_token || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Chat ID</label>
-            <input type="text" id="tgChatId" value="${map.telegram_chat_id || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">แจ้งเตือนเมื่อ:</label>
-            <div class="space-y-1">
-              ${['import','receive','assign_editor','edit','return','pass','propose','approve','pay','cancel','recovery'].map(event => `
-                <label class="flex items-center gap-2">
-                  <input type="checkbox" class="tg-notify" data-key="tg_notify_${event}" ${map[`tg_notify_${event}`] === '1' ? 'checked' : ''}>
-                  <span class="text-sm">${event.replace('_',' ')}</span>
-                </label>
-              `).join('')}
-            </div>
-          </div>
-          <button id="saveTelegramBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก</button>
-        </div>
-      `;
-
-      document.getElementById('saveTelegramBtn').addEventListener('click', async () => {
-        const updates = [
-          { key: 'telegram_enabled', value: document.getElementById('tgEnabled').value },
-          { key: 'telegram_bot_token', value: document.getElementById('tgBotToken').value },
-          { key: 'telegram_chat_id', value: document.getElementById('tgChatId').value },
-        ];
-        document.querySelectorAll('.tg-notify').forEach(cb => {
-          updates.push({ key: cb.dataset.key, value: cb.checked ? '1' : '0' });
+    function bindTabs() {
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach((b) => b.style.borderColor = 'transparent');
+          btn.style.borderColor = 'var(--color-primary)';
+          document.querySelectorAll('section[id^="panel-"]').forEach((s) => s.classList.add('hidden'));
+          document.getElementById(`panel-${btn.dataset.tab}`).classList.remove('hidden');
+          loadTab(btn.dataset.tab);
         });
-        showLoading('กำลังบันทึก...');
-        try {
-          for (const u of updates) {
-            await system.telegram.update(u.key, u.value);
-          }
-          showToast('บันทึก Telegram Settings สำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
       });
     }
 
-    // Retention
-    async function renderRetention(container) {
-      const res = await system.retention.get();
-      if (!res.success) throw new Error(res.error);
-      const data = res.data || [];
-      const map = {};
-      data.forEach(s => map[s.key] = s.value);
+    const loaded = {};
+    function loadTab(tab) {
+      if (loaded[tab]) return;
+      loaded[tab] = true;
+      if (tab === 'perm') loadPerm();
+      if (tab === 'session') loadSession();
+      if (tab === 'audit') bindAudit();
+      if (tab === 'telegram') loadTelegram();
+      if (tab === 'retention') loadRetention();
+    }
 
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Data Retention</h3>
-        <div class="space-y-4 max-w-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">เปิดใช้งาน</label>
-            <select id="retentionEnabled" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
-              <option value="1" ${map.retention_enabled === '1' ? 'selected' : ''}>เปิด</option>
-              <option value="0" ${map.retention_enabled !== '1' ? 'selected' : ''}>ปิด</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ระยะเวลาเก็บข้อมูล (ปี)</label>
-            <input type="number" id="retentionYears" value="${map.retention_years || 5}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <button id="saveRetentionBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก</button>
-          <button id="executeRetentionBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition">ดำเนินการลบข้อมูลเก่า</button>
-          <div id="retentionResult" class="text-sm text-gray-500 dark:text-gray-400"></div>
-        </div>
-      `;
+    /* ===== Permission Matrix ===== */
+    async function loadPerm() {
+      try {
+        const res = await api.get('/api/system/permission-matrix');
+        permData = res.data;
+        renderPerm();
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnSavePerm').addEventListener('click', savePerm);
+      document.getElementById('btnResetPerm').addEventListener('click', resetPerm);
+    }
 
-      document.getElementById('saveRetentionBtn').addEventListener('click', async () => {
-        const enabled = document.getElementById('retentionEnabled').value;
-        const years = document.getElementById('retentionYears').value;
-        showLoading('กำลังบันทึก...');
-        try {
-          await system.retention.update('retention_enabled', enabled);
-          await system.retention.update('retention_years', years);
-          showToast('บันทึก Retention Settings สำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
+    function renderPerm() {
+      const roles = ['admin', 'manager', 'editor', 'checker', 'staff', 'guest'];
+      document.getElementById('permTableBody').innerHTML = permData.map((row) => `
+        <tr>
+          <td class="font-medium">${MODULE_LABEL[row.module] || row.module}</td>
+          ${roles.map((role) => `
+            <td class="text-center">
+              <input type="checkbox" class="perm-cb w-4 h-4" data-module="${row.module}" data-role="${role}"
+                ${row[role] ? 'checked' : ''}
+                ${role === 'admin' ? 'disabled title="Admin ต้องเข้าได้ทุกหน้า"' : ''}>
+            </td>`).join('')}
+        </tr>`).join('');
+    }
+
+    async function savePerm() {
+      const updates = [];
+      document.querySelectorAll('.perm-cb:not([disabled])').forEach((cb) => {
+        const existing = updates.find((u) => u.module === cb.dataset.module);
+        if (existing) { existing[cb.dataset.role] = cb.checked ? 1 : 0; }
+        else { updates.push({ module: cb.dataset.module, [cb.dataset.role]: cb.checked ? 1 : 0 }); }
+      });
+      App.showLoading('กำลังบันทึก...');
+      try {
+        for (const u of updates) await api.put('/api/system/permission-matrix', u);
+        App.closeLoading();
+        App.toast('บันทึกสิทธิ์สำเร็จ', 'success');
+      } catch (err) { App.closeLoading(); App.errorAlert(err); }
+    }
+
+    async function resetPerm() {
+      const confirm = await Swal.fire({
+        title: 'รีเซ็ต Permission Matrix?', text: 'จะเปลี่ยนกลับเป็นค่าเริ่มต้นทั้งหมด',
+        icon: 'warning', showCancelButton: true, confirmButtonText: 'รีเซ็ต',
+        cancelButtonText: 'ยกเลิก', confirmButtonColor: '#DC2626'
+      });
+      if (!confirm.isConfirmed) return;
+      App.showLoading('กำลังรีเซ็ต...');
+      try {
+        for (const [module, perms] of Object.entries(DEFAULT_PERM)) {
+          await api.put('/api/system/permission-matrix', { module, ...perms });
         }
+        App.closeLoading();
+        App.toast('รีเซ็ตสำเร็จ', 'success');
+        delete loaded['perm']; loadPerm();
+      } catch (err) { App.closeLoading(); App.errorAlert(err); }
+    }
+
+    /* ===== Session Settings ===== */
+    async function loadSession() {
+      try {
+        const res = await api.get('/api/system/session-settings');
+        const d = res.data;
+        document.getElementById('ss_guest_timeout').value = d.session_guest_timeout_hours || 2;
+        document.getElementById('ss_inactivity').value = d.session_inactivity_minutes || 30;
+        document.getElementById('ss_token_age').value = d.session_token_age_hours || 12;
+        document.getElementById('ss_max_retry').value = d.session_max_login_retry || 5;
+      } catch (err) { App.errorAlert(err); }
+      document.getElementById('btnSaveSession').addEventListener('click', async () => {
+        try {
+          await api.put('/api/system/session-settings', {
+            session_guest_timeout_hours: parseInt(document.getElementById('ss_guest_timeout').value, 10),
+            session_inactivity_minutes: parseInt(document.getElementById('ss_inactivity').value, 10),
+            session_token_age_hours: parseInt(document.getElementById('ss_token_age').value, 10),
+            session_max_login_retry: parseInt(document.getElementById('ss_max_retry').value, 10)
+          });
+          App.toast('บันทึก Session Settings สำเร็จ', 'success');
+        } catch (err) { App.errorAlert(err); }
+      });
+    }
+
+    /* ===== Audit Logs ===== */
+    function bindAudit() {
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('auditEnd').value = today;
+      document.getElementById('auditStart').value = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+      document.getElementById('btnLoadAudit').addEventListener('click', () => { auditPage = 1; loadAudit(); });
+      document.getElementById('btnExportLogs').addEventListener('click', exportLogs);
+    }
+
+    async function loadAudit() {
+      document.getElementById('auditBody').innerHTML = `<tr><td colspan="5"><div class="skeleton h-6 my-1"></div></td></tr>`.repeat(5);
+      try {
+        const res = await api.get('/api/system/audit-logs', {
+          module: document.getElementById('auditModule').value,
+          start_date: document.getElementById('auditStart').value,
+          end_date: document.getElementById('auditEnd').value,
+          page: auditPage, pageSize: AUDIT_PAGE
+        });
+        document.getElementById('auditBody').innerHTML = res.data.length === 0
+          ? `<tr><td colspan="5" class="text-center py-10 text-[var(--color-text-muted)]">ไม่พบข้อมูล</td></tr>`
+          : res.data.map((r) => `
+            <tr>
+              <td class="text-xs whitespace-nowrap">${App.thaiDate(r.time)}</td>
+              <td class="text-xs">${r.username || '-'}<br><span class="text-[var(--color-text-muted)]">${r.email || '-'}</span></td>
+              <td><span class="badge badge-CHECKUP">${r.action}</span></td>
+              <td class="text-xs text-[var(--color-text-muted)]">${r.module || '-'}</td>
+              <td class="text-xs max-w-xs truncate" title="${r.detail || ''}">${r.detail || '-'}</td>
+            </tr>`).join('');
+        const totalPages = Math.ceil(res.total / AUDIT_PAGE) || 1;
+        document.getElementById('auditPagination').innerHTML = `
+          <span class="text-[var(--color-text-muted)]">หน้า ${auditPage} / ${totalPages} (${res.total} รายการ)</span>
+          <div class="flex gap-2">
+            <button class="btn btn-outline" onclick="changeAuditPage(-1)" ${auditPage <= 1 ? 'disabled' : ''}>ก่อนหน้า</button>
+            <button class="btn btn-outline" onclick="changeAuditPage(1)" ${auditPage >= totalPages ? 'disabled' : ''}>ถัดไป</button>
+          </div>`;
+      } catch (err) { App.errorAlert(err); }
+    }
+    window.changeAuditPage = function (dir) { auditPage += dir; loadAudit(); };
+
+    async function exportLogs() {
+      App.showLoading('กำลัง Export...');
+      try {
+        const res = await api.get('/api/system/audit-logs/export');
+        App.closeLoading();
+        const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+      } catch (err) { App.closeLoading(); App.errorAlert(err); }
+    }
+
+    /* ===== Telegram ===== */
+    async function loadTelegram() {
+      try {
+        const res = await api.get('/api/system/telegram-settings');
+        const d = res.data;
+        document.getElementById('tg_enabled').checked = d.telegram_enabled === '1';
+        document.getElementById('tg_bot_token').value = d.telegram_bot_token || '';
+        document.getElementById('tg_chat_id').value = d.telegram_chat_id || '';
+        document.getElementById('tgEventToggles').innerHTML = Object.entries(TG_EVENTS).map(([key, label]) => `
+          <label class="flex items-center gap-2">
+            <input type="checkbox" id="${key}" class="w-4 h-4" ${d[key] === '1' ? 'checked' : ''}>
+            <span>${label}</span>
+          </label>`).join('');
+      } catch (err) { App.errorAlert(err); }
+
+      document.getElementById('btnSaveTelegram').addEventListener('click', async () => {
+        const payload = {
+          telegram_enabled: document.getElementById('tg_enabled').checked ? '1' : '0',
+          telegram_bot_token: document.getElementById('tg_bot_token').value.trim(),
+          telegram_chat_id: document.getElementById('tg_chat_id').value.trim()
+        };
+        Object.keys(TG_EVENTS).forEach((key) => {
+          payload[key] = document.getElementById(key).checked ? '1' : '0';
+        });
+        try {
+          await api.put('/api/system/telegram-settings', payload);
+          App.toast('บันทึกการตั้งค่า Telegram สำเร็จ', 'success');
+        } catch (err) { App.errorAlert(err); }
+      });
+    }
+
+    /* ===== Data Retention ===== */
+    async function loadRetention() {
+      try {
+        const res = await api.get('/api/system/retention-settings');
+        const d = res.data;
+        document.getElementById('rt_enabled').checked = d.retention_enabled === '1';
+        document.getElementById('rt_years').value = d.retention_years || 5;
+      } catch (err) { App.errorAlert(err); }
+
+      document.getElementById('btnSaveRetention').addEventListener('click', async () => {
+        try {
+          await api.put('/api/system/retention-settings', {
+            retention_enabled: document.getElementById('rt_enabled').checked ? '1' : '0',
+            retention_years: parseInt(document.getElementById('rt_years').value, 10)
+          });
+          App.toast('บันทึกการตั้งค่า Data Retention สำเร็จ', 'success');
+        } catch (err) { App.errorAlert(err); }
       });
 
-      document.getElementById('executeRetentionBtn').addEventListener('click', async () => {
-        const years = parseInt(document.getElementById('retentionYears').value);
-        if (!years || years <= 0) { showToast('กรุณาระบุจำนวนปีที่ถูกต้อง', 'error'); return; }
+      document.getElementById('btnPreviewRetention').addEventListener('click', async () => {
+        App.showLoading('กำลังตรวจสอบ...');
+        try {
+          const res = await api.post('/api/system/retention/run', { preview: true, years: parseInt(document.getElementById('rt_years').value, 10) });
+          App.closeLoading();
+          await Swal.fire({
+            title: 'Preview Data Retention',
+            html: `<p class="text-sm">พบรายการเก่าเกิน <strong>${document.getElementById('rt_years').value} ปี</strong> จำนวน <strong>${res.count}</strong> รายการ</p>
+                   <p class="text-xs text-[var(--color-text-muted)] mt-2">วันที่ตัด: ก่อน ${res.cutoff_date}</p>`,
+            icon: 'info', confirmButtonText: 'ปิด', confirmButtonColor: '#9F7AEA'
+          });
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
+      });
+
+      document.getElementById('btnRunRetention').addEventListener('click', async () => {
+        const years = parseInt(document.getElementById('rt_years').value, 10);
         const confirm = await Swal.fire({
-          title: 'ยืนยันการลบข้อมูลเก่า',
-          text: `จะลบข้อมูลที่เก่ากว่า ${years} ปี (ข้อมูลจะถูกลบถาวร)`,
-          icon: 'warning',
-          showCancelButton: true,
-          confirmButtonText: 'ยืนยัน',
-          cancelButtonText: 'ยกเลิก',
-          confirmButtonColor: '#d33',
+          title: `ดำเนินการลบข้อมูลเก่าเกิน ${years} ปี?`,
+          html: `<p class="text-sm">ระบบจะสำรองข้อมูลก่อนลบ และไม่สามารถย้อนกลับได้</p>`,
+          icon: 'warning', showCancelButton: true,
+          confirmButtonText: 'ดำเนินการ', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#DC2626',
+          input: 'text', inputPlaceholder: 'พิมพ์ "CONFIRM" เพื่อยืนยัน',
+          inputValidator: (v) => v !== 'CONFIRM' && 'กรุณาพิมพ์ CONFIRM เพื่อยืนยัน'
         });
         if (!confirm.isConfirmed) return;
-        showLoading('กำลังดำเนินการ...');
+        App.showLoading('กำลังดำเนินการ...');
         try {
-          const res = await system.retention.execute(years);
-          if (!res.success) throw new Error(res.error);
-          document.getElementById('retentionResult').innerHTML = `<span class="text-green-600">${res.data.message}</span>`;
-          showToast('ดำเนินการสำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-          document.getElementById('retentionResult').innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
-        } finally {
-          hideLoading();
-        }
+          const res = await api.post('/api/system/retention/run', { preview: false, years });
+          App.closeLoading();
+          App.toast(`ลบข้อมูลเก่าสำเร็จ ${res.deleted} รายการ`, 'success');
+        } catch (err) { App.closeLoading(); App.errorAlert(err); }
       });
-    }
-
-    // Tab switching
-    document.querySelectorAll('.system-tab').forEach(tab => {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('.system-tab').forEach(t => {
-          t.classList.remove('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
-          t.classList.add('text-gray-500', 'dark:text-gray-400');
-        });
-        this.classList.remove('text-gray-500', 'dark:text-gray-400');
-        this.classList.add('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
-        loadSystemTab(this.dataset.tab);
-      });
-    });
-
-    // Init
-    const user = requireRole(['admin']);
-    if (user) {
-      await loadLayout();
-      loadSystemTab('permission');
     }
   </script>
 </body>
