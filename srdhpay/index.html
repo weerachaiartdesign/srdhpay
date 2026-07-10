@@ -1,142 +1,136 @@
-<!-- index.html (ปรับปรุง guest login + เพิ่ม link style.css) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SRDH PAY - ระบบทะเบียนเบิกจ่ายเงิน</title>
+  <title>เข้าสู่ระบบ - SRDH PAY</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
-    body { font-family: 'Prompt', sans-serif; }
-    .bg-pattern {
-      background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-    }
-    .dark .bg-pattern {
-      background: linear-gradient(135deg, #1a1a2e 0%, #2d1b69 100%);
-    }
-  </style>
 </head>
-<body class="bg-pattern min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-8 transition-all">
-    <div class="text-center mb-8">
-      <img src="/icons/logo_srdhpay-630.png" alt="SRDH PAY" class="h-20 mx-auto mb-4">
-      <h1 class="text-3xl font-bold text-purple-700 dark:text-purple-400">SRDH PAY</h1>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร</p>
+<body class="min-h-screen flex items-center justify-center p-4"
+      style="background: radial-gradient(circle at 20% 20%, var(--color-primary-soft), var(--color-bg) 60%);">
+
+  <!-- ปุ่มสลับ Dark Mode มุมขวาบน -->
+  <button id="btn-darkmode-login" class="fixed top-4 right-4 p-2.5 rounded-full bg-[var(--color-surface)] shadow-md hover:scale-105 transition" aria-label="สลับธีมสว่าง/มืด">
+    <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+    <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+  </button>
+
+  <div class="w-full max-w-sm">
+    <!-- โลโก้ + ชื่อโปรแกรม -->
+    <div class="text-center mb-6">
+      <img src="icons/logo_srdhpay-630.png" alt="SRDH PAY" class="w-20 h-20 mx-auto mb-3 rounded-2xl shadow-lg object-contain bg-white p-2" onerror="this.style.display='none'">
+      <h1 class="font-display font-bold text-2xl" style="color:var(--color-primary-dark)">SRDH PAY</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">ระบบทะเบียนเบิกจ่ายเงิน โรงพยาบาลสิรินธร</p>
     </div>
 
-    <form id="loginForm" class="space-y-4">
+    <!-- ฟอร์มเข้าสู่ระบบ -->
+    <form id="loginForm" class="card p-6 space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">อีเมล</label>
-        <input type="email" id="email" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white" placeholder="admin@srdh.acc.com">
+        <label class="block text-sm font-medium mb-1.5">อีเมล</label>
+        <input type="email" id="email" required autocomplete="username"
+               class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent focus:outline-none focus:ring-2"
+               style="--tw-ring-color:var(--color-primary)" placeholder="name@srdh.acc.com">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">รหัสผ่าน</label>
-        <input type="password" id="password" required class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white" placeholder="••••••••">
+        <label class="block text-sm font-medium mb-1.5">รหัสผ่าน</label>
+        <div class="relative">
+          <input type="password" id="password" required autocomplete="current-password"
+                 class="w-full px-3.5 py-2.5 rounded-lg border border-[var(--color-border)] bg-transparent focus:outline-none focus:ring-2 pr-10"
+                 style="--tw-ring-color:var(--color-primary)" placeholder="••••••">
+          <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" aria-label="แสดง/ซ่อนรหัสผ่าน">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </button>
+        </div>
       </div>
-      <button type="submit" id="loginBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition duration-200 flex items-center justify-center">
+
+      <button type="submit" id="btnLogin" class="btn btn-primary w-full justify-center py-2.5">
         เข้าสู่ระบบ
+      </button>
+
+      <div class="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+        <div class="flex-1 border-t border-[var(--color-border)]"></div>
+        <span>หรือ</span>
+        <div class="flex-1 border-t border-[var(--color-border)]"></div>
+      </div>
+
+      <button type="button" id="btnGuest" class="btn btn-soft w-full justify-center py-2.5">
+        เข้าใช้งานแบบผู้เยี่ยมชม
       </button>
     </form>
 
-    <div class="mt-4 text-center">
-      <button id="guestBtn" class="text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 transition">
-        👤 เข้าใช้งานแบบผู้เยี่ยมชม
-      </button>
-    </div>
-
-    <div class="mt-6 text-center text-xs text-gray-500 dark:text-gray-400">
-      SRDH PAY v1.0.0
-    </div>
+    <p class="text-center text-xs text-[var(--color-text-muted)] mt-5">SRDH PAY · Version <span id="footer-version">1.0.0</span></p>
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loginLoading" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center shadow-xl">
-      <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="mt-3 text-gray-700 dark:text-gray-300" id="loginLoadingText">กำลังเข้าสู่ระบบ...</p>
-    </div>
-  </div>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script>
+    // ถ้า login อยู่แล้ว ไม่ต้องแสดงหน้านี้ซ้ำ
+    if (App.getToken()) location.href = 'dashboard.html';
 
-  <script type="module">
-    import { auth, setToken, setCurrentUser } from './js/api.js';
+    App.initDarkMode();
+    document.getElementById('btn-darkmode-login').addEventListener('click', () => App.toggleDarkMode());
 
-    const form = document.getElementById('loginForm');
-    const guestBtn = document.getElementById('guestBtn');
-    const loadingDiv = document.getElementById('loginLoading');
-    const loadingText = document.getElementById('loginLoadingText');
+    document.getElementById('togglePassword').addEventListener('click', () => {
+      const input = document.getElementById('password');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
 
-    function showLoginLoading(msg = 'กำลังเข้าสู่ระบบ...') {
-      loadingText.textContent = msg;
-      loadingDiv.classList.remove('hidden');
-    }
-
-    function hideLoginLoading() {
-      loadingDiv.classList.add('hidden');
-    }
-
-    form.addEventListener('submit', async (e) => {
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
+      if (!email || !password) return App.toast('กรุณากรอกอีเมลและรหัสผ่าน', 'warning');
 
-      console.log('Login attempt:', email);
-      showLoginLoading('กำลังเข้าสู่ระบบ...');
+      const btn = document.getElementById('btnLogin');
+      btn.disabled = true;
+      btn.textContent = 'กำลังเข้าสู่ระบบ...';
 
       try {
-        const result = await auth.login(email, password);
-        console.log('Login result:', result);
+        const res = await api.post('/api/auth/login', { email, password });
+        App.setSession(res.token, { ...res.user, isGuest: false });
 
-        if (result.success) {
-          setToken(result.data.token);
-          setCurrentUser(result.data);
-          console.log('User saved:', result.data);
-          // Toast
-          const toast = document.createElement('div');
-          toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50 transition-opacity duration-500';
-          toast.textContent = 'ยินดีต้อนรับ ' + result.data.username;
-          document.body.appendChild(toast);
-          setTimeout(() => {
-            toast.classList.add('opacity-0');
-            setTimeout(() => toast.remove(), 500);
-          }, 2000);
-
-          // Redirect
-          setTimeout(() => {
-            window.location.href = '/dashboard.html';
-          }, 500);
-        } else {
-          hideLoginLoading();
-          alert(result.error || 'เข้าสู่ระบบล้มเหลว');
+        if (res.user.force_change_password) {
+          sessionStorage.setItem('srdhpay_force_change_password', '1');
+          await Swal.fire({
+            icon: 'info', title: `ยินดีต้อนรับ คุณ${res.user.username}`,
+            text: 'กรุณาเปลี่ยนรหัสผ่านก่อนใช้งานครั้งแรก', confirmButtonColor: '#9F7AEA'
+          });
+          location.href = 'auth.html';
+          return;
         }
+
+        await Swal.fire({
+          icon: 'success', title: `ยินดีต้อนรับ คุณ${res.user.username} เข้าสู่ระบบ`,
+          timer: 1500, showConfirmButton: false
+        });
+        location.href = 'dashboard.html';
       } catch (err) {
-        console.error('Login error:', err);
-        hideLoginLoading();
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        App.errorAlert(err);
+        btn.disabled = false;
+        btn.textContent = 'เข้าสู่ระบบ';
       }
     });
 
-    guestBtn.addEventListener('click', async () => {
-      console.log('Guest login');
-      showLoginLoading('กำลังสร้างเซสชันผู้เยี่ยมชม...');
+    document.getElementById('btnGuest').addEventListener('click', async () => {
+      const btn = document.getElementById('btnGuest');
+      btn.disabled = true;
       try {
-        const result = await auth.guest();
-        console.log('Guest result:', result);
-        if (result.success) {
-          setToken(result.data.token);
-          setCurrentUser(result.data);
-          window.location.href = '/dashboard.html';
-        } else {
-          hideLoginLoading();
-          alert(result.error || 'ไม่สามารถเข้าสู่ระบบแบบผู้เยี่ยมชม');
-        }
+        const res = await api.post('/api/auth/guest');
+        App.setSession(res.token, { ...res.user, isGuest: true });
+        await Swal.fire({
+          icon: 'info', title: `ยินดีต้อนรับ Guest (${res.guestId})`,
+          text: 'เข้าสู่ระบบแบบผู้เยี่ยมชม (ดูข้อมูลได้อย่างเดียว)',
+          timer: 1800, showConfirmButton: false
+        });
+        location.href = 'dashboard.html';
       } catch (err) {
-        console.error('Guest error:', err);
-        hideLoginLoading();
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        App.errorAlert(err);
+        btn.disabled = false;
       }
     });
   </script>
