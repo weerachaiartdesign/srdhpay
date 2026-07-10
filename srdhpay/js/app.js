@@ -1,4 +1,4 @@
-// js/app.js - Main application script
+// js/app.js - Main application script (แก้ไขเพิ่ม Hamburger, ปรับปรุง auth guard)
 
 import { auth, getCurrentUser, setCurrentUser, setToken, statusMap, getToken } from './api.js';
 
@@ -29,7 +29,7 @@ async function loadComponent(selector, url) {
   }
 }
 
-// Load header and sidebar
+// ---- Load header and sidebar ----
 export async function loadLayout() {
   console.log('Loading layout...');
   try {
@@ -53,7 +53,11 @@ export function toggleSidebar() {
   if (sidebar) {
     sidebar.classList.toggle('hidden');
     sidebar.classList.toggle('block');
-    // เปลี่ยนไอคอน hamburger เป็นปิด (optional)
+    // เปลี่ยนเป็น md:block เมื่อหน้าจอใหญ่
+    if (window.innerWidth >= 768) {
+      sidebar.classList.remove('hidden');
+      sidebar.classList.add('block');
+    }
   }
 }
 
@@ -61,6 +65,18 @@ function setupHamburger() {
   const btn = document.getElementById('hamburgerBtn');
   if (btn) {
     btn.addEventListener('click', toggleSidebar);
+    // เมื่อหน้าจอเปลี่ยนขนาด ให้แสดง sidebar อัตโนมัติถ้าจอใหญ่
+    window.addEventListener('resize', () => {
+      const sidebar = document.getElementById('sidebar-container');
+      if (window.innerWidth >= 768 && sidebar) {
+        sidebar.classList.remove('hidden');
+        sidebar.classList.add('block');
+      } else if (window.innerWidth < 768 && sidebar) {
+        // ปิดไว้ให้ user กดเปิดเอง
+        sidebar.classList.add('hidden');
+        sidebar.classList.remove('block');
+      }
+    });
   }
 }
 
@@ -98,7 +114,6 @@ export function toggleDarkMode() {
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
   updateDarkModeIcon();
-  // Update user preference if logged in
   const user = getCurrentUser();
   if (user) {
     // Optionally update via API later
@@ -140,7 +155,6 @@ function setupDarkModeToggle() {
 // ---- User Info in Header ----
 function setupUserInfo() {
   const user = getCurrentUser();
-  console.log('setupUserInfo - user:', user);
   if (user) {
     const nameEl = document.getElementById('userName');
     const roleEl = document.getElementById('userRole');
@@ -270,15 +284,15 @@ export async function initApp() {
   }
 }
 
-// Run on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM ready, calling initApp');
-  initApp();
-});
-
-// Expose functions globally
+// ---- Expose functions globally ----
 window.logout = logout;
 window.showToast = showToast;
 window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.toggleSidebar = toggleSidebar;
+
+// ---- Auto-run on DOM ready ----
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM ready, calling initApp');
+  initApp();
+});
