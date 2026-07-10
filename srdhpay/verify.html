@@ -7,9 +7,16 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900">
@@ -24,10 +31,10 @@
             <p class="text-gray-600 dark:text-gray-400">บันทึก การตรวจสอบ การแก้ไข และรับคืน</p>
           </div>
           <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
-            <button id="editBtn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">แก้ไข</button>
-            <button id="returnBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">รับคืน</button>
-            <button id="passBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">ตรวจผ่าน</button>
-            <button id="printEditBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์ใบส่งแก้ไข</button>
+            <button id="editBtn" class="btn btn-primary bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">แก้ไข</button>
+            <button id="returnBtn" class="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">รับคืน</button>
+            <button id="passBtn" class="btn btn-primary bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm transition disabled:opacity-50 disabled:cursor-not-allowed">ตรวจผ่าน</button>
+            <button id="printEditBtn" class="btn btn-secondary bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">พิมพ์ใบส่งแก้ไข</button>
           </div>
         </div>
 
@@ -49,8 +56,8 @@
             <input id="filterVendor" type="text" placeholder="ชื่อเจ้าหนี้/บริษัท" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
           </div>
           <div class="mt-3 flex gap-2">
-            <button id="searchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
-            <button id="clearBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
+            <button id="searchBtn" class="btn btn-primary bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
+            <button id="clearBtn" class="btn btn-secondary bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
           </div>
         </div>
 
@@ -90,7 +97,6 @@
     let selectedUuids = [];
     let moneyTypes = [];
     let depts = [];
-    let currentFilter = { status: '' };
 
     async function loadFilters() {
       try {
@@ -118,7 +124,9 @@
             sel.appendChild(opt);
           });
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Failed to load filters:', e);
+      }
     }
 
     async function loadData() {
@@ -131,28 +139,20 @@
         const sender = document.getElementById('filterSender').value;
         const vendor = document.getElementById('filterVendor').value;
 
-        let params = {
-          limit: 1000,
-          page: 1,
-        };
+        let params = { limit: 1000, page: 1 };
         if (status) params.status = status;
-        else {
-          // Default: show CHECKUP and EDITING
-          params.status = 'CHECKUP,EDITING';
-        }
+        else params.status = 'CHECKUP,EDITING';
         if (moneyType) params.money_type = moneyType;
         if (dept) params.dept = dept;
         if (sender) params.sender = sender;
         if (vendor) params.vendor = vendor;
 
-        // If editor, only show their own
         if (user.role === 'editor') {
           params.editor = user.email;
         }
 
         const res = await register.list(params);
         if (!res.success) throw new Error(res.error);
-
         currentData = res.data.data || [];
         renderTable();
       } catch (err) {
@@ -237,15 +237,12 @@
       document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
         selectedUuids.push(cb.dataset.uuid);
       });
-      const editBtn = document.getElementById('editBtn');
-      const returnBtn = document.getElementById('returnBtn');
-      const passBtn = document.getElementById('passBtn');
-      editBtn.disabled = selectedUuids.length === 0;
-      returnBtn.disabled = selectedUuids.length === 0;
-      passBtn.disabled = selectedUuids.length === 0;
+      document.getElementById('editBtn').disabled = selectedUuids.length === 0;
+      document.getElementById('returnBtn').disabled = selectedUuids.length === 0;
+      document.getElementById('passBtn').disabled = selectedUuids.length === 0;
     }
 
-    // Edit (Send for correction)
+    // Edit
     document.getElementById('editBtn').addEventListener('click', async () => {
       if (selectedUuids.length === 0) return;
       const confirm = await Swal.fire({
@@ -301,18 +298,16 @@
     document.getElementById('passBtn').addEventListener('click', async () => {
       if (selectedUuids.length === 0) return;
 
-      // Collect DK numbers for each selected item
       const dkInputs = {};
       for (const uuid of selectedUuids) {
         const item = currentData.find(d => d.uuid === uuid);
         if (!item) continue;
-        let defaultDk = item.dk_no_display || '';
         const { value } = await Swal.fire({
           title: `กรอกเลขที่ฎีกา`,
           html: `รายการ: ${item.vendor} - ${item.description || 'ไม่มี'}`,
           input: 'text',
           inputLabel: 'เลขที่ฎีกา (เช่น 1801/69)',
-          inputValue: defaultDk,
+          inputValue: item.dk_no_display || '',
           showCancelButton: true,
           confirmButtonText: 'ตกลง',
           cancelButtonText: 'ข้าม',
@@ -325,12 +320,8 @@
             return null;
           }
         });
-        if (value) {
-          dkInputs[uuid] = value;
-        } else {
-          // If cancelled, stop
-          return;
-        }
+        if (value) dkInputs[uuid] = value;
+        else return;
       }
 
       const dkList = Object.entries(dkInputs).map(([uuid, dk]) => ({
@@ -363,9 +354,7 @@
     });
 
     // Print
-    document.getElementById('printEditBtn').addEventListener('click', () => {
-      window.print();
-    });
+    document.getElementById('printEditBtn').addEventListener('click', () => window.print());
 
     // Search
     document.getElementById('searchBtn').addEventListener('click', loadData);
