@@ -272,6 +272,66 @@ export async function initApp() {
 // Re-export จาก api.js เพื่อให้ import จาก app.js ได้สะดวก
 export { getCurrentUser, getToken, setToken, setCurrentUser };
 
+// ---- เรียกใช้ Sidebar Visibility หลังจากโหลด Sidebar เสร็จ ----
+export function initSidebarVisibility() {
+  // ตรวจสอบว่า sidebar ถูกโหลดหรือยัง
+  const sidebar = document.getElementById('sidebar-container');
+  if (!sidebar) return;
+  
+  // รอให้ script ใน sidebar ทำงานก่อน
+  setTimeout(() => {
+    // ตรวจสอบว่ามี user หรือไม่
+    const user = getCurrentUser();
+    if (!user) {
+      console.log('No user, sidebar will use guest mode');
+      return;
+    }
+    
+    // ถ้ามี user และ sidebar ยังไม่ถูกปรับ ให้บังคับปรับอีกครั้ง
+    // โดยเรียกใช้ฟังก์ชัน initSidebar ใน sidebar (ถ้ามี)
+    try {
+      // ตรวจสอบว่า sidebar มีฟังก์ชัน initSidebar หรือไม่
+      const sidebarScript = sidebar.querySelector('script');
+      if (sidebarScript && typeof window.initSidebar === 'function') {
+        window.initSidebar();
+      } else {
+        // ถ้าไม่มี ให้เช็ค role และซ่อน/แสดงเมนูด้วยตัวเอง
+        applyMenuVisibility(user);
+      }
+    } catch (e) {
+      console.warn('Sidebar visibility fallback:', e);
+    }
+  }, 100);
+}
+
+function applyMenuVisibility(user) {
+  const role = user.role || 'guest';
+  const menuIds = ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings', 'menuSystem'];
+  
+  // กำหนดว่า role ไหนควรเห็นเมนูอะไร
+  const visibleMenus = {
+    admin: menuIds,  // admin เห็นทุกอย่าง
+    manager: ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings'],
+    editor: ['menuImport', 'menuReceive', 'menuVerify'],
+    checker: ['menuImport', 'menuReceive', 'menuVerify', 'menuPayment'],
+    staff: ['menuImport'],
+    guest: []  // guest ไม่เห็นอะไรเลย (เหลือแค่ Dashboard + List)
+  };
+  
+  const visible = visibleMenus[role] || [];
+  
+  menuIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (visible.includes(id)) {
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+  });
+}
+
 // Run on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM ready, calling initApp');
