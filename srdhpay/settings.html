@@ -7,6 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -18,825 +19,724 @@
     <div id="sidebar-container"></div>
     <main class="flex-1 p-4 md:p-6 overflow-y-auto">
       <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าโปรแกรม</h1>
-            <p class="text-gray-600 dark:text-gray-400">ตั้งค่าโปรแกรมทะเบียนเบิกจ่ายเงิน รพส.</p>
-          </div>
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าโปรแกรม</h1>
+          <p class="text-gray-600 dark:text-gray-400">ตั้งค่าโปรแกรมทะเบียนเบิกจ่ายเงิน รพส.</p>
         </div>
 
-        <!-- Tabs -->
+        <!-- Settings Tabs -->
         <div class="flex flex-wrap border-b border-gray-200 dark:border-gray-700 mb-4 gap-1">
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 dark:text-purple-400 dark:border-purple-400" data-tab="fiscal">ปีงบประมาณ</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="money">ประเภทเงิน</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="vendor">เจ้าหนี้/บริษัท</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="dept">หน่วยงาน</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="display">การแสดงผล</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="editdata">แก้ไขข้อมูล</button>
-          <button class="settings-tab px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="backup">Backup & Restore</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-purple-600 border-b-2 border-purple-600 dark:text-purple-400 dark:border-purple-400" data-tab="fiscal">ปีงบประมาณ</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="money">ประเภทเงิน</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="vendor">เจ้าหนี้/บริษัท</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="dept">หน่วยงาน</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="display">การแสดงผล</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="edit">แก้ไขรายการ</button>
+          <button class="settings-tab px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" data-tab="backup">Backup & Restore</button>
         </div>
 
-        <!-- Content areas -->
+        <!-- Tab Content -->
         <div id="tabContent" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <!-- Content will be rendered by JS -->
+          <!-- Rendered by JS -->
+          <div class="text-center text-gray-500 dark:text-gray-400 py-8">เลือกเมนูด้านบน</div>
         </div>
       </div>
     </main>
   </div>
 
   <script type="module">
-    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
-    import { settings, register, statusMap, statusColors } from './js/api.js';
+    import { loadLayout, requireRole, showToast, showLoading, hideLoading, formatThaiDate } from './js/app.js';
+    import { settings, register, users, statusMap } from './js/api.js';
 
-    let currentTab = 'fiscal';
+    let moneyTypes = [];
+    let vendors = [];
+    let depts = [];
+    let appSettings = {};
 
-    async function loadTab(tab) {
-      currentTab = tab;
-      const container = document.getElementById('tabContent');
-      showLoading('กำลังโหลด...');
+    // ---- Load Master Data ----
+    async function loadMasterData() {
       try {
-        switch (tab) {
-          case 'fiscal': await renderFiscal(container); break;
-          case 'money': await renderMoneyType(container); break;
-          case 'vendor': await renderVendor(container); break;
-          case 'dept': await renderDept(container); break;
-          case 'display': await renderDisplay(container); break;
-          case 'editdata': await renderEditData(container); break;
-          case 'backup': await renderBackup(container); break;
-          default: container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">เลือกแท็บ</p>';
+        const [mtRes, vendorRes, deptRes, appRes] = await Promise.all([
+          settings.get('money_type'),
+          settings.get('vendor'),
+          settings.get('dept'),
+          settings.get('app'),
+        ]);
+        if (mtRes.success) moneyTypes = mtRes.data;
+        if (vendorRes.success) vendors = vendorRes.data;
+        if (deptRes.success) depts = deptRes.data;
+        if (appRes.success) {
+          appSettings = {};
+          appRes.data.forEach(s => { appSettings[s.key] = s.value; });
         }
+      } catch (e) {
+        console.error('Failed to load master data:', e);
+      }
+    }
+
+    // ---- Render Tab ----
+    function renderTab(tab) {
+      const container = document.getElementById('tabContent');
+      switch (tab) {
+        case 'fiscal': renderFiscal(container); break;
+        case 'money': renderMoney(container); break;
+        case 'vendor': renderVendor(container); break;
+        case 'dept': renderDept(container); break;
+        case 'display': renderDisplay(container); break;
+        case 'edit': renderEdit(container); break;
+        case 'backup': renderBackup(container); break;
+        default: container.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8">เลือกเมนูด้านบน</div>';
+      }
+    }
+
+    // ---- 5.11.1 กำหนดปีงบประมาณ ----
+    function renderFiscal(container) {
+      const fy = appSettings.fiscal_year || '2569';
+      const start = appSettings.fiscal_start_date || '2568-10-01';
+      const end = appSettings.fiscal_end_date || '2569-09-30';
+      const importStart = appSettings.import_allow_start || '2568-10-01';
+      const importEnd = appSettings.import_allow_end || '2569-09-30';
+      container.innerHTML = `
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">กำหนดปีงบประมาณ</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ปีงบประมาณ</label>
+            <input id="setFiscalYear" type="text" value="${fy}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+            <p class="text-xs text-gray-500 mt-1">เช่น 2569</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ปีงบประมาณ 2 หลัก</label>
+            <input id="setFiscalShort" type="text" value="${appSettings.fiscal_year_short || '69'}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่เริ่มต้นปีงบประมาณ</label>
+            <input id="setFiscalStart" type="date" value="${start}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่สิ้นสุดปีงบประมาณ</label>
+            <input id="setFiscalEnd" type="date" value="${end}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่อนุญาตให้นำเข้า (เริ่ม)</label>
+            <input id="setImportStart" type="date" value="${importStart}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่อนุญาตให้นำเข้า (สิ้นสุด)</label>
+            <input id="setImportEnd" type="date" value="${importEnd}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button id="saveFiscalBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded text-sm transition">บันทึก</button>
+        </div>
+      `;
+      document.getElementById('saveFiscalBtn').addEventListener('click', saveFiscal);
+    }
+
+    async function saveFiscal() {
+      const data = {
+        fiscal_year: document.getElementById('setFiscalYear').value,
+        fiscal_year_short: document.getElementById('setFiscalShort').value,
+        fiscal_start_date: document.getElementById('setFiscalStart').value,
+        fiscal_end_date: document.getElementById('setFiscalEnd').value,
+        import_allow_start: document.getElementById('setImportStart').value,
+        import_allow_end: document.getElementById('setImportEnd').value,
+      };
+      showLoading('กำลังบันทึก...');
+      try {
+        for (const [key, value] of Object.entries(data)) {
+          await settings.create('app', { key, value });
+        }
+        showToast('บันทึกปีงบประมาณสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('fiscal');
       } catch (err) {
-        showToast(err.message, 'error');
-        container.innerHTML = '<p class="text-red-500">เกิดข้อผิดพลาด</p>';
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
-    // Fiscal
-    async function renderFiscal(container) {
-      const res = await settings.get('app');
-      if (!res.success) throw new Error(res.error);
-      const data = res.data;
-      const fiscal = data.find(s => s.key === 'fiscal_year');
-      const start = data.find(s => s.key === 'fiscal_start_date');
-      const end = data.find(s => s.key === 'fiscal_end_date');
-      const importStart = data.find(s => s.key === 'import_allow_start');
-      const importEnd = data.find(s => s.key === 'import_allow_end');
-
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">กำหนดปีงบประมาณ</h3>
-        <div class="space-y-4 max-w-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ปีงบประมาณ</label>
-            <input type="text" id="fiscalYear" value="${fiscal?.value || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่เริ่มต้น</label>
-            <input type="date" id="fiscalStart" value="${start?.value || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่สิ้นสุด</label>
-            <input type="date" id="fiscalEnd" value="${end?.value || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่อนุญาตนำเข้า (เริ่ม)</label>
-            <input type="date" id="importStart" value="${importStart?.value || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">วันที่อนุญาตนำเข้า (สิ้นสุด)</label>
-            <input type="date" id="importEnd" value="${importEnd?.value || ''}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <button id="saveFiscalBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก</button>
-        </div>
-      `;
-
-      document.getElementById('saveFiscalBtn').addEventListener('click', async () => {
-        const year = document.getElementById('fiscalYear').value;
-        const start = document.getElementById('fiscalStart').value;
-        const end = document.getElementById('fiscalEnd').value;
-        const importStart = document.getElementById('importStart').value;
-        const importEnd = document.getElementById('importEnd').value;
-
-        if (!year || !start || !end) {
-          showToast('กรุณากรอกข้อมูลให้ครบ', 'error');
-          return;
-        }
-        showLoading('กำลังบันทึก...');
-        try {
-          const updates = [
-            { key: 'fiscal_year', value: year },
-            { key: 'fiscal_year_short', value: year.slice(-2) },
-            { key: 'fiscal_start_date', value: start },
-            { key: 'fiscal_end_date', value: end },
-            { key: 'import_allow_start', value: importStart },
-            { key: 'import_allow_end', value: importEnd },
-          ];
-          for (const u of updates) {
-            await settings.create('app', u);
-          }
-          showToast('บันทึกสำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-    }
-
-    // Money Type
-    async function renderMoneyType(container) {
-      const res = await settings.get('money_type');
-      if (!res.success) throw new Error(res.error);
-      const list = res.data || [];
+    // ---- 5.11.2 กำหนดประเภทเงิน ----
+    function renderMoney(container) {
       let html = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">กำหนดประเภทเงิน</h3>
-        <div class="flex gap-2 mb-4">
-          <input type="text" id="newMoneyName" placeholder="ชื่อประเภทเงิน" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-          <input type="color" id="newMoneyColor" value="#808080" class="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded">
-          <button id="addMoneyBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">เพิ่ม</button>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">กำหนดประเภทเงิน</h3>
+          <button id="addMoneyBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition flex items-center gap-1">
+            <span class="text-lg">+</span> เพิ่ม
+          </button>
         </div>
-        <table class="w-full text-sm">
-          <thead class="bg-purple-50 dark:bg-purple-900/30">
-            <tr><th class="px-3 py-2 text-left">ลำดับ</th><th class="px-3 py-2 text-left">ประเภทเงิน</th><th class="px-3 py-2 text-left">สี</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
-          </thead>
-          <tbody>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr><th class="px-3 py-2 text-left">ลำดับ</th><th class="px-3 py-2 text-left">ประเภทเงิน</th><th class="px-3 py-2 text-left">สี</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
+            </thead>
+            <tbody>
       `;
-      list.forEach((mt, idx) => {
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2">${idx+1}</td>
-          <td class="px-3 py-2">${mt.name}</td>
-          <td class="px-3 py-2"><span class="inline-block w-6 h-6 rounded" style="background-color:${mt.color}"></span> ${mt.color}</td>
-          <td class="px-3 py-2 text-center">
-            <button class="edit-money-btn text-blue-600 hover:text-blue-800 text-xs" data-id="${mt.id}" data-name="${mt.name}" data-color="${mt.color}">แก้ไข</button>
-            <button class="delete-money-btn text-red-600 hover:text-red-800 text-xs" data-id="${mt.id}">ลบ</button>
-          </td>
-        </tr>`;
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-
-      // Add
-      document.getElementById('addMoneyBtn').addEventListener('click', async () => {
-        const name = document.getElementById('newMoneyName').value.trim();
-        const color = document.getElementById('newMoneyColor').value;
-        if (!name) { showToast('กรุณากรอกชื่อ', 'error'); return; }
-        showLoading('กำลังเพิ่ม...');
-        try {
-          const res = await settings.create('money_type', { name, color, active: 1 });
-          if (!res.success) throw new Error(res.error);
-          showToast('เพิ่มสำเร็จ', 'success');
-          loadTab('money');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-
-      // Edit
-      container.querySelectorAll('.edit-money-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const { value: formValues } = await Swal.fire({
-            title: 'แก้ไขประเภทเงิน',
-            html: `
-              <label class="block text-sm font-medium">ชื่อ</label>
-              <input id="editMoneyName" class="w-full border rounded px-3 py-2 mt-1" value="${this.dataset.name}">
-              <label class="block text-sm font-medium mt-3">สี</label>
-              <input type="color" id="editMoneyColor" class="w-full border rounded px-3 py-2 mt-1" value="${this.dataset.color}">
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'บันทึก',
-            cancelButtonText: 'ยกเลิก',
-            preConfirm: () => ({
-              name: document.getElementById('editMoneyName').value,
-              color: document.getElementById('editMoneyColor').value,
-            })
-          });
-          if (!formValues) return;
-          showLoading('กำลังบันทึก...');
-          try {
-            const res = await settings.update('money_type', id, formValues);
-            if (!res.success) throw new Error(res.error);
-            showToast('บันทึกสำเร็จ', 'success');
-            loadTab('money');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-
-      // Delete
-      container.querySelectorAll('.delete-money-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const confirm = await Swal.fire({ title: 'ยืนยันการลบ', text: 'ลบประเภทเงินนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก' });
-          if (!confirm.isConfirmed) return;
-          showLoading('กำลังลบ...');
-          try {
-            const res = await settings.delete('money_type', id);
-            if (!res.success) throw new Error(res.error);
-            showToast('ลบสำเร็จ', 'success');
-            loadTab('money');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-    }
-
-    // Vendor
-    async function renderVendor(container) {
-      const res = await settings.get('vendor');
-      if (!res.success) throw new Error(res.error);
-      const list = res.data || [];
-      let html = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">รายชื่อเจ้าหนี้/บริษัท</h3>
-        <div class="flex gap-2 mb-4">
-          <input type="text" id="newVendorName" placeholder="ชื่อเจ้าหนี้/บริษัท" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-          <button id="addVendorBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">เพิ่ม</button>
-        </div>
-        <table class="w-full text-sm">
-          <thead class="bg-purple-50 dark:bg-purple-900/30">
-            <tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">ชื่อ</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
-          </thead>
-          <tbody>
-      `;
-      list.forEach((v, idx) => {
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2">${idx+1}</td>
-          <td class="px-3 py-2">${v.name}</td>
-          <td class="px-3 py-2 text-center">
-            <button class="edit-vendor-btn text-blue-600 hover:text-blue-800 text-xs" data-id="${v.id}" data-name="${v.name}">แก้ไข</button>
-            <button class="delete-vendor-btn text-red-600 hover:text-red-800 text-xs" data-id="${v.id}">ลบ</button>
-          </td>
-        </tr>`;
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-
-      document.getElementById('addVendorBtn').addEventListener('click', async () => {
-        const name = document.getElementById('newVendorName').value.trim();
-        if (!name) { showToast('กรุณากรอกชื่อ', 'error'); return; }
-        showLoading('กำลังเพิ่ม...');
-        try {
-          const res = await settings.create('vendor', { name, active: 1 });
-          if (!res.success) throw new Error(res.error);
-          showToast('เพิ่มสำเร็จ', 'success');
-          loadTab('vendor');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-
-      container.querySelectorAll('.edit-vendor-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const { value: name } = await Swal.fire({ title: 'แก้ไขชื่อ', input: 'text', inputValue: this.dataset.name, showCancelButton: true });
-          if (!name) return;
-          showLoading('กำลังบันทึก...');
-          try {
-            const res = await settings.update('vendor', id, { name });
-            if (!res.success) throw new Error(res.error);
-            showToast('บันทึกสำเร็จ', 'success');
-            loadTab('vendor');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-
-      container.querySelectorAll('.delete-vendor-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const confirm = await Swal.fire({ title: 'ยืนยันการลบ', text: 'ลบเจ้าหนี้?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก' });
-          if (!confirm.isConfirmed) return;
-          showLoading('กำลังลบ...');
-          try {
-            const res = await settings.delete('vendor', id);
-            if (!res.success) throw new Error(res.error);
-            showToast('ลบสำเร็จ', 'success');
-            loadTab('vendor');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-    }
-
-    // Dept
-    async function renderDept(container) {
-      const res = await settings.get('dept');
-      if (!res.success) throw new Error(res.error);
-      const list = res.data || [];
-      let html = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">หน่วยงาน</h3>
-        <div class="flex gap-2 mb-4">
-          <input type="text" id="newDeptName" placeholder="ชื่อหน่วยงาน" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-          <button id="addDeptBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">เพิ่ม</button>
-        </div>
-        <table class="w-full text-sm">
-          <thead class="bg-purple-50 dark:bg-purple-900/30">
-            <tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">หน่วยงาน</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
-          </thead>
-          <tbody>
-      `;
-      list.forEach((d, idx) => {
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2">${idx+1}</td>
-          <td class="px-3 py-2">${d.name}</td>
-          <td class="px-3 py-2 text-center">
-            <button class="edit-dept-btn text-blue-600 hover:text-blue-800 text-xs" data-id="${d.id}" data-name="${d.name}">แก้ไข</button>
-            <button class="delete-dept-btn text-red-600 hover:text-red-800 text-xs" data-id="${d.id}">ลบ</button>
-          </td>
-        </tr>`;
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-
-      document.getElementById('addDeptBtn').addEventListener('click', async () => {
-        const name = document.getElementById('newDeptName').value.trim();
-        if (!name) { showToast('กรุณากรอกชื่อ', 'error'); return; }
-        showLoading('กำลังเพิ่ม...');
-        try {
-          const res = await settings.create('dept', { name, active: 1 });
-          if (!res.success) throw new Error(res.error);
-          showToast('เพิ่มสำเร็จ', 'success');
-          loadTab('dept');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-
-      container.querySelectorAll('.edit-dept-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const { value: name } = await Swal.fire({ title: 'แก้ไขชื่อ', input: 'text', inputValue: this.dataset.name, showCancelButton: true });
-          if (!name) return;
-          showLoading('กำลังบันทึก...');
-          try {
-            const res = await settings.update('dept', id, { name });
-            if (!res.success) throw new Error(res.error);
-            showToast('บันทึกสำเร็จ', 'success');
-            loadTab('dept');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-
-      container.querySelectorAll('.delete-dept-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const id = parseInt(this.dataset.id);
-          const confirm = await Swal.fire({ title: 'ยืนยันการลบ', text: 'ลบหน่วยงาน?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ', cancelButtonText: 'ยกเลิก' });
-          if (!confirm.isConfirmed) return;
-          showLoading('กำลังลบ...');
-          try {
-            const res = await settings.delete('dept', id);
-            if (!res.success) throw new Error(res.error);
-            showToast('ลบสำเร็จ', 'success');
-            loadTab('dept');
-          } catch (err) {
-            showToast(err.message, 'error');
-          } finally {
-            hideLoading();
-          }
-        });
-      });
-    }
-
-    // Display
-    async function renderDisplay(container) {
-      const res = await settings.get('app');
-      if (!res.success) throw new Error(res.error);
-      const data = res.data;
-      const topMoney = data.find(s => s.key === 'dashboard_top_money_type');
-      const topDept = data.find(s => s.key === 'dashboard_top_dept');
-      const topMoneyGraph = data.find(s => s.key === 'dashboard_top_money');
-
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">กำหนดการแสดงผล</h3>
-        <div class="space-y-4 max-w-md">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">จำนวนประเภทเงินใน Dashboard Cards</label>
-            <input type="number" id="displayTopMoney" value="${topMoney?.value || 4}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">จำนวนหน่วยงานในกราฟ</label>
-            <input type="number" id="displayTopDept" value="${topDept?.value || 5}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">จำนวนประเภทเงินในกราฟ</label>
-            <input type="number" id="displayTopMoneyGraph" value="${topMoneyGraph?.value || 4}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-          </div>
-          <button id="saveDisplayBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึก</button>
-        </div>
-      `;
-
-      document.getElementById('saveDisplayBtn').addEventListener('click', async () => {
-        const topMoney = document.getElementById('displayTopMoney').value;
-        const topDept = document.getElementById('displayTopDept').value;
-        const topMoneyGraph = document.getElementById('displayTopMoneyGraph').value;
-        showLoading('กำลังบันทึก...');
-        try {
-          await settings.create('app', { key: 'dashboard_top_money_type', value: topMoney });
-          await settings.create('app', { key: 'dashboard_top_dept', value: topDept });
-          await settings.create('app', { key: 'dashboard_top_money', value: topMoneyGraph });
-          showToast('บันทึกสำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-    }
-
-    // Edit Data (with cancel/recover)
-    async function renderEditData(container) {
-      container.innerHTML = `
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">แก้ไขข้อมูลรายการ</h3>
-        <div class="flex flex-wrap gap-3 mb-4">
-          <select id="editSearchType" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-            <option value="">ทุกประเภท</option>
-            <option value="status">สถานะ</option>
-            <option value="receive_no">เลขที่รับ</option>
-            <option value="request_no">เลขที่ใบขอเบิก</option>
-            <option value="dk_no">เลขที่ฎีกา</option>
-            <option value="money_type">ประเภทเงิน</option>
-            <option value="dept">หน่วยงาน</option>
-            <option value="sender">ผู้ส่งเอกสาร</option>
-            <option value="editor">ผู้ตรวจ</option>
-            <option value="invoice">Invoice</option>
-            <option value="egp_no">เลข e-GP</option>
-            <option value="vendor">เจ้าหนี้/บริษัท</option>
-            <option value="description">รายการ</option>
-            <option value="amount">จำนวนเงิน</option>
-          </select>
-          <input type="text" id="editSearchValue" placeholder="คำค้นหา" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white">
-          <button id="editSearchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
-          <button id="editClearBtn" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded text-sm transition">ล้าง</button>
-        </div>
-        <div id="editResult" class="overflow-x-auto">
-          <p class="text-gray-500 dark:text-gray-400">กรุณาค้นหา</p>
-        </div>
-      `;
-
-      document.getElementById('editSearchBtn').addEventListener('click', async () => {
-        const type = document.getElementById('editSearchType').value;
-        const value = document.getElementById('editSearchValue').value.trim();
-        if (!value) { showToast('กรุณากรอกคำค้นหา', 'error'); return; }
-
-        showLoading('กำลังค้นหา...');
-        try {
-          let params = { limit: 100, page: 1 };
-          if (type === 'status') params.status = value;
-          else if (type === 'receive_no') params.receive_no = value;
-          else if (type === 'request_no') params.request_no = value;
-          else if (type === 'dk_no') params.dk_no = value;
-          else if (type === 'money_type') params.money_type = value;
-          else if (type === 'dept') params.dept = value;
-          else if (type === 'sender') params.sender = value;
-          else if (type === 'editor') params.editor = value;
-          else if (type === 'invoice') params.invoice = value;
-          else if (type === 'egp_no') params.egp_no = value;
-          else if (type === 'vendor') params.vendor = value;
-          else if (type === 'description') params.description = value;
-          else if (type === 'amount') params.amount = value;
-          else params.search = value; // default
-
-          const res = await register.list(params);
-          if (!res.success) throw new Error(res.error);
-          const items = res.data.data || [];
-          renderEditResult(items);
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
-
-      document.getElementById('editClearBtn').addEventListener('click', () => {
-        document.getElementById('editSearchValue').value = '';
-        document.getElementById('editResult').innerHTML = '<p class="text-gray-500 dark:text-gray-400">กรุณาค้นหา</p>';
-      });
-    }
-
-    function renderEditResult(items) {
-      const container = document.getElementById('editResult');
-      if (!items.length) {
-        container.innerHTML = '<p class="text-gray-500 dark:text-gray-400">ไม่พบข้อมูล</p>';
-        return;
-      }
-
-      let html = `<table class="w-full text-sm">
-        <thead class="bg-purple-50 dark:bg-purple-900/30">
-          <tr>
-            <th class="px-3 py-2 text-left">สถานะ</th>
-            <th class="px-3 py-2 text-left">เลขทะเบียน/วันที่</th>
-            <th class="px-3 py-2 text-left">เลขรับ/วันที่รับ</th>
-            <th class="px-3 py-2 text-left">เลขขอเบิก/ฎีกา</th>
-            <th class="px-3 py-2 text-left">ประเภท/หน่วยงาน</th>
-            <th class="px-3 py-2 text-left">ผู้ส่ง/ผู้ตรวจ</th>
-            <th class="px-3 py-2 text-left">เจ้าหนี้/รายการ</th>
-            <th class="px-3 py-2 text-right">จำนวน</th>
-            <th class="px-3 py-2 text-center">จัดการ</th>
+      moneyTypes.forEach((mt, idx) => {
+        html += `
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <td class="px-3 py-2">${idx + 1}</td>
+            <td class="px-3 py-2">${mt.name}</td>
+            <td class="px-3 py-2"><span class="inline-block w-6 h-6 rounded" style="background:${mt.color}"></span> ${mt.color}</td>
+            <td class="px-3 py-2 text-center">
+              <button class="edit-money-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${mt.id}">✏️</button>
+              <button class="delete-money-btn text-red-600 hover:text-red-800" data-id="${mt.id}">🗑️</button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-      `;
-      for (const item of items) {
-        const statusThai = statusMap[item.status] || item.status;
-        const statusClass = statusColors[item.status] || 'bg-gray-100 text-gray-700';
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2"><span class="status-badge ${statusClass}">${statusThai}</span></td>
-          <td class="px-3 py-2">
-            <div>${item.register_no_display || '-'}</div>
-            <div class="text-xs text-gray-500">${formatThaiDate(item.register_date)}</div>
-          </td>
-          <td class="px-3 py-2">
-            <div>${item.receive_no_display || '-'}</div>
-            <div class="text-xs text-gray-500">${formatThaiDate(item.receive_date)}</div>
-          </td>
-          <td class="px-3 py-2">
-            <div>${item.request_no_display || '-'}</div>
-            <div class="text-xs text-gray-500">ฎีกา: ${item.dk_no_display || '-'}</div>
-          </td>
-          <td class="px-3 py-2">
-            <div>${item.money_type || '-'}</div>
-            <div class="text-xs text-gray-500">${item.dept || '-'}</div>
-          </td>
-          <td class="px-3 py-2">
-            <div>${item.sender || '-'}</div>
-            <div class="text-xs text-gray-500">${item.editor || '-'}</div>
-          </td>
-          <td class="px-3 py-2">
-            <div class="font-medium">${item.vendor || '-'}</div>
-            <div class="text-xs truncate max-w-xs">${item.description || '-'}</div>
-          </td>
-          <td class="px-3 py-2 text-right font-medium">${formatCurrency(item.amount)}</td>
-          <td class="px-3 py-2 text-center">
-            <button class="edit-item-btn text-blue-600 hover:text-blue-800 text-xs" data-uuid="${item.uuid}">แก้ไข</button>
-            <button class="cancel-item-btn text-red-600 hover:text-red-800 text-xs" data-uuid="${item.uuid}">${item.cancel_status === 1 ? 'กู้คืน' : 'ยกเลิก'}</button>
-          </td>
-        </tr>`;
-      }
-      html += `</tbody></table>`;
+        `;
+      });
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
 
-      // Edit button - open detail popup with edit fields
-      container.querySelectorAll('.edit-item-btn').forEach(btn => {
-        btn.addEventListener('click', () => editItem(btn.dataset.uuid));
+      container.querySelectorAll('.edit-money-btn').forEach(btn => {
+        btn.addEventListener('click', () => editMoney(parseInt(btn.dataset.id)));
       });
-      // Cancel/Recover
-      container.querySelectorAll('.cancel-item-btn').forEach(btn => {
-        btn.addEventListener('click', () => cancelRecoverItem(btn.dataset.uuid));
+      container.querySelectorAll('.delete-money-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteMoney(parseInt(btn.dataset.id)));
       });
+      document.getElementById('addMoneyBtn').addEventListener('click', addMoney);
     }
 
-    async function editItem(uuid) {
-      // Fetch item detail
-      const res = await register.list({ uuid });
-      if (!res.success) throw new Error(res.error);
-      const item = res.data.data?.[0];
-      if (!item) { showToast('ไม่พบรายการ', 'error'); return; }
-
-      // Show edit form
-      const { value: formValues } = await Swal.fire({
-        title: 'แก้ไขรายการ',
+    async function addMoney() {
+      const { value: form } = await Swal.fire({
+        title: 'เพิ่มประเภทเงิน',
         html: `
-          <div class="text-left max-h-96 overflow-y-auto">
-            <div class="grid grid-cols-2 gap-2">
-              <div><label class="text-sm font-medium">ประเภทเงิน</label><input id="editMoneyType" class="w-full border rounded px-2 py-1" value="${item.money_type || ''}"></div>
-              <div><label class="text-sm font-medium">หน่วยงาน</label><input id="editDept" class="w-full border rounded px-2 py-1" value="${item.dept || ''}"></div>
-              <div><label class="text-sm font-medium">ผู้ส่ง</label><input id="editSender" class="w-full border rounded px-2 py-1" value="${item.sender || ''}"></div>
-              <div><label class="text-sm font-medium">ผู้ตรวจ</label><input id="editEditor" class="w-full border rounded px-2 py-1" value="${item.editor || ''}"></div>
-              <div><label class="text-sm font-medium">ใบกัน</label><input id="editReserveNo" class="w-full border rounded px-2 py-1" value="${item.reserve_no || ''}"></div>
-              <div><label class="text-sm font-medium">จำนวนกัน</label><input id="editReserveAmount" class="w-full border rounded px-2 py-1" value="${item.reserve_amount || ''}"></div>
-              <div><label class="text-sm font-medium">e-GP</label><input id="editEgpNo" class="w-full border rounded px-2 py-1" value="${item.egp_no || ''}"></div>
-              <div><label class="text-sm font-medium">Invoice</label><input id="editInvoice" class="w-full border rounded px-2 py-1" value="${item.invoice || ''}"></div>
-              <div><label class="text-sm font-medium">เจ้าหนี้</label><input id="editVendor" class="w-full border rounded px-2 py-1" value="${item.vendor || ''}"></div>
-              <div><label class="text-sm font-medium">จำนวนเงิน</label><input id="editAmount" class="w-full border rounded px-2 py-1" value="${item.amount || ''}"></div>
-              <div class="col-span-2"><label class="text-sm font-medium">รายการ</label><textarea id="editDescription" class="w-full border rounded px-2 py-1" rows="2">${item.description || ''}</textarea></div>
-              <div><label class="text-sm font-medium">วันที่ส่งแก้ไข</label><input type="date" id="editEditDate" class="w-full border rounded px-2 py-1" value="${item.edit_date ? item.edit_date.split('T')[0] : ''}"></div>
-              <div><label class="text-sm font-medium">วันที่รับคืน</label><input type="date" id="editReturnDate" class="w-full border rounded px-2 py-1" value="${item.return_date ? item.return_date.split('T')[0] : ''}"></div>
-              <div><label class="text-sm font-medium">วันที่ตรวจผ่าน</label><input type="date" id="editPassDate" class="w-full border rounded px-2 py-1" value="${item.pass_date ? item.pass_date.split('T')[0] : ''}"></div>
-              <div><label class="text-sm font-medium">วันที่เสนอ</label><input type="date" id="editProposeDate" class="w-full border rounded px-2 py-1" value="${item.propose_date ? item.propose_date.split('T')[0] : ''}"></div>
-              <div><label class="text-sm font-medium">วันที่อนุมัติ</label><input type="date" id="editApproveDate" class="w-full border rounded px-2 py-1" value="${item.approve_date ? item.approve_date.split('T')[0] : ''}"></div>
-              <div><label class="text-sm font-medium">วันที่จ่าย</label><input type="date" id="editPayDate" class="w-full border rounded px-2 py-1" value="${item.pay_date ? item.pay_date.split('T')[0] : ''}"></div>
-            </div>
-          </div>
+          <input id="swal-name" class="w-full border rounded px-3 py-2 mb-2" placeholder="ชื่อประเภทเงิน">
+          <input id="swal-color" class="w-full border rounded px-3 py-2" type="color" value="#9F7AEA">
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'เพิ่ม',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => ({
+          name: document.getElementById('swal-name').value,
+          color: document.getElementById('swal-color').value,
+        })
+      });
+      if (!form || !form.name) return;
+      try {
+        await settings.create('money_type', { name: form.name, color: form.color });
+        showToast('เพิ่มประเภทเงินสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('money');
+      } catch (err) {
+        showToast('เพิ่มไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    async function editMoney(id) {
+      const mt = moneyTypes.find(x => x.id === id);
+      if (!mt) return;
+      const { value: form } = await Swal.fire({
+        title: 'แก้ไขประเภทเงิน',
+        html: `
+          <input id="swal-name" class="w-full border rounded px-3 py-2 mb-2" value="${mt.name}">
+          <input id="swal-color" class="w-full border rounded px-3 py-2" type="color" value="${mt.color}">
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
         cancelButtonText: 'ยกเลิก',
-        width: 600,
-        preConfirm: () => {
-          return {
-            money_type: document.getElementById('editMoneyType').value,
-            dept: document.getElementById('editDept').value,
-            sender: document.getElementById('editSender').value,
-            editor: document.getElementById('editEditor').value,
-            reserve_no: document.getElementById('editReserveNo').value,
-            reserve_amount: parseFloat(document.getElementById('editReserveAmount').value) || 0,
-            egp_no: document.getElementById('editEgpNo').value,
-            invoice: document.getElementById('editInvoice').value,
-            vendor: document.getElementById('editVendor').value,
-            amount: parseFloat(document.getElementById('editAmount').value) || 0,
-            description: document.getElementById('editDescription').value,
-            edit_date: document.getElementById('editEditDate').value || null,
-            return_date: document.getElementById('editReturnDate').value || null,
-            pass_date: document.getElementById('editPassDate').value || null,
-            propose_date: document.getElementById('editProposeDate').value || null,
-            approve_date: document.getElementById('editApproveDate').value || null,
-            pay_date: document.getElementById('editPayDate').value || null,
-          };
-        }
+        preConfirm: () => ({
+          name: document.getElementById('swal-name').value,
+          color: document.getElementById('swal-color').value,
+        })
       });
-      if (!formValues) return;
+      if (!form) return;
+      try {
+        await settings.update('money_type', id, form);
+        showToast('แก้ไขสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('money');
+      } catch (err) {
+        showToast('แก้ไขไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
 
+    async function deleteMoney(id) {
+      const confirm = await Swal.fire({ title: 'ลบประเภทเงิน?', icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบ' });
+      if (!confirm.isConfirmed) return;
+      try {
+        await settings.delete('money_type', id);
+        showToast('ลบสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('money');
+      } catch (err) {
+        showToast('ลบไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    // ---- 5.11.3 รายชื่อเจ้าหนี้/บริษัท ----
+    function renderVendor(container) {
+      let html = `
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">รายชื่อเจ้าหนี้/บริษัท</h3>
+          <button id="addVendorBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition flex items-center gap-1">
+            <span class="text-lg">+</span> เพิ่ม
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">ชื่อ</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
+            </thead>
+            <tbody>
+      `;
+      vendors.forEach((v, idx) => {
+        html += `
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <td class="px-3 py-2">${idx + 1}</td>
+            <td class="px-3 py-2">${v.name}</td>
+            <td class="px-3 py-2 text-center">
+              <button class="edit-vendor-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${v.id}">✏️</button>
+              <button class="delete-vendor-btn text-red-600 hover:text-red-800" data-id="${v.id}">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+      container.querySelectorAll('.edit-vendor-btn').forEach(btn => {
+        btn.addEventListener('click', () => editVendor(parseInt(btn.dataset.id)));
+      });
+      container.querySelectorAll('.delete-vendor-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteVendor(parseInt(btn.dataset.id)));
+      });
+      document.getElementById('addVendorBtn').addEventListener('click', addVendor);
+    }
+
+    async function addVendor() {
+      const { value: name } = await Swal.fire({ title: 'เพิ่มเจ้าหนี้/บริษัท', input: 'text', showCancelButton: true });
+      if (!name) return;
+      try {
+        await settings.create('vendor', { name });
+        showToast('เพิ่มสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('vendor');
+      } catch (err) {
+        showToast('เพิ่มไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    async function editVendor(id) {
+      const v = vendors.find(x => x.id === id);
+      if (!v) return;
+      const { value: name } = await Swal.fire({ title: 'แก้ไข', input: 'text', inputValue: v.name, showCancelButton: true });
+      if (!name) return;
+      try {
+        await settings.update('vendor', id, { name });
+        showToast('แก้ไขสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('vendor');
+      } catch (err) {
+        showToast('แก้ไขไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteVendor(id) {
+      const confirm = await Swal.fire({ title: 'ลบ?', icon: 'warning', showCancelButton: true });
+      if (!confirm.isConfirmed) return;
+      try {
+        await settings.delete('vendor', id);
+        showToast('ลบสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('vendor');
+      } catch (err) {
+        showToast('ลบไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    // ---- 5.11.4 หน่วยงาน (ย่อ) ----
+    function renderDept(container) {
+      let html = `
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">หน่วยงาน</h3>
+          <button id="addDeptBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition flex items-center gap-1">
+            <span class="text-lg">+</span> เพิ่ม
+          </button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr><th class="px-3 py-2 text-left">#</th><th class="px-3 py-2 text-left">ชื่อ</th><th class="px-3 py-2 text-center">จัดการ</th></tr>
+            </thead>
+            <tbody>
+      `;
+      depts.forEach((d, idx) => {
+        html += `
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <td class="px-3 py-2">${idx + 1}</td>
+            <td class="px-3 py-2">${d.name}</td>
+            <td class="px-3 py-2 text-center">
+              <button class="edit-dept-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${d.id}">✏️</button>
+              <button class="delete-dept-btn text-red-600 hover:text-red-800" data-id="${d.id}">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+      container.querySelectorAll('.edit-dept-btn').forEach(btn => {
+        btn.addEventListener('click', () => editDept(parseInt(btn.dataset.id)));
+      });
+      container.querySelectorAll('.delete-dept-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteDept(parseInt(btn.dataset.id)));
+      });
+      document.getElementById('addDeptBtn').addEventListener('click', addDept);
+    }
+
+    async function addDept() {
+      const { value: name } = await Swal.fire({ title: 'เพิ่มหน่วยงาน', input: 'text', showCancelButton: true });
+      if (!name) return;
+      try {
+        await settings.create('dept', { name });
+        showToast('เพิ่มสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('dept');
+      } catch (err) {
+        showToast('เพิ่มไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    async function editDept(id) {
+      const d = depts.find(x => x.id === id);
+      if (!d) return;
+      const { value: name } = await Swal.fire({ title: 'แก้ไข', input: 'text', inputValue: d.name, showCancelButton: true });
+      if (!name) return;
+      try {
+        await settings.update('dept', id, { name });
+        showToast('แก้ไขสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('dept');
+      } catch (err) {
+        showToast('แก้ไขไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteDept(id) {
+      const confirm = await Swal.fire({ title: 'ลบ?', icon: 'warning', showCancelButton: true });
+      if (!confirm.isConfirmed) return;
+      try {
+        await settings.delete('dept', id);
+        showToast('ลบสำเร็จ', 'success');
+        await loadMasterData();
+        renderTab('dept');
+      } catch (err) {
+        showToast('ลบไม่สำเร็จ: ' + err.message, 'error');
+      }
+    }
+
+    // ---- 5.11.5 กำหนดการแสดงผล ----
+    function renderDisplay(container) {
+      container.innerHTML = `
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">กำหนดการแสดงผล</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">จำนวนประเภทเงินใน Dashboard Cards</label>
+            <input id="setTopMoney" type="number" value="${appSettings.dashboard_top_money_type || 4}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">จำนวนหน่วยงานในกราฟ</label>
+            <input id="setTopDept" type="number" value="${appSettings.dashboard_top_dept || 5}" class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button id="saveDisplayBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded text-sm transition">บันทึก</button>
+        </div>
+      `;
+      document.getElementById('saveDisplayBtn').addEventListener('click', saveDisplay);
+    }
+
+    async function saveDisplay() {
+      const data = {
+        dashboard_top_money_type: document.getElementById('setTopMoney').value,
+        dashboard_top_dept: document.getElementById('setTopDept').value,
+      };
       showLoading('กำลังบันทึก...');
       try {
-        const res = await register.update(uuid, formValues);
-        if (!res.success) throw new Error(res.error);
+        for (const [key, value] of Object.entries(data)) {
+          await settings.create('app', { key, value });
+        }
         showToast('บันทึกสำเร็จ', 'success');
-        // Refresh search
-        document.getElementById('editSearchBtn').click();
+        await loadMasterData();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
-    async function cancelRecoverItem(uuid) {
-      // Check current status
-      const res = await register.list({ uuid });
-      if (!res.success) throw new Error(res.error);
-      const item = res.data.data?.[0];
-      if (!item) { showToast('ไม่พบรายการ', 'error'); return; }
+    // ---- 5.11.6 แก้ไขข้อมูลรายการ (ย่อ) ----
+    function renderEdit(container) {
+      container.innerHTML = `
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">แก้ไขข้อมูลรายการ</h3>
+        <div class="flex flex-wrap gap-3 mb-4">
+          <select id="editSearchType" class="border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+            <option value="">ค้นหาทุกประเภท</option>
+            <option value="status">สถานะ</option>
+            <option value="receive_no_display">เลขที่รับ</option>
+            <option value="request_no_display">เลขขอเบิก</option>
+            <option value="dk_no_display">เลขฎีกา</option>
+            <option value="money_type">ประเภทเงิน</option>
+            <option value="dept">หน่วยงาน</option>
+            <option value="sender">ผู้ส่ง</option>
+            <option value="editor">ผู้ตรวจ</option>
+            <option value="invoice">Invoice</option>
+            <option value="egp_no">เลข e-GP</option>
+            <option value="vendor">เจ้าหนี้</option>
+            <option value="description">รายการ</option>
+          </select>
+          <input id="editSearchValue" type="text" placeholder="คำค้นหา" class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-white">
+          <button id="editSearchBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">ค้นหา</button>
+        </div>
+        <div id="editResults" class="overflow-x-auto">
+          <div class="text-center text-gray-500 dark:text-gray-400 py-8">กรุณาค้นหารายการ</div>
+        </div>
+      `;
+      document.getElementById('editSearchBtn').addEventListener('click', searchEdit);
+    }
 
-      const isCancelled = item.cancel_status === 1;
-      const action = isCancelled ? 'กู้คืน' : 'ยกเลิก';
+    async function searchEdit() {
+      const type = document.getElementById('editSearchType').value;
+      const value = document.getElementById('editSearchValue').value.trim();
+      if (!value) { showToast('กรุณากรอกคำค้นหา', 'warning'); return; }
 
-      if (isCancelled) {
-        const confirm = await Swal.fire({
-          title: 'กู้คืนรายการ',
-          text: `จะกู้คืนรายการนี้ (สถานะเดิม: ${statusMap[item.cancel_change] || item.cancel_change || 'ไม่ทราบ'})`,
-          icon: 'question',
-          showCancelButton: true,
-          confirmButtonText: 'กู้คืน',
-          cancelButtonText: 'ยกเลิก',
+      showLoading('กำลังค้นหา...');
+      try {
+        const params = { limit: 100, page: 1 };
+        if (type) params[type] = value;
+        else params.search = value;
+        const res = await register.list(params);
+        if (!res.success) throw new Error(res.error);
+        const items = res.data.data || [];
+        const container = document.getElementById('editResults');
+        if (!items.length) {
+          container.innerHTML = '<div class="text-center text-gray-500 dark:text-gray-400 py-8">ไม่พบรายการ</div>';
+          return;
+        }
+        let html = `
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th class="px-3 py-2 text-left">สถานะ</th>
+                <th class="px-3 py-2 text-left">เลขรับ</th>
+                <th class="px-3 py-2 text-left">เลขขอเบิก/ฎีกา</th>
+                <th class="px-3 py-2 text-left">ประเภท/หน่วยงาน</th>
+                <th class="px-3 py-2 text-left">เจ้าหนี้/รายการ</th>
+                <th class="px-3 py-2 text-right">จำนวน</th>
+                <th class="px-3 py-2 text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        for (const item of items) {
+          const statusThai = statusMap[item.status] || item.status;
+          html += `
+            <tr class="border-b border-gray-100 dark:border-gray-700">
+              <td class="px-3 py-2">${statusThai}</td>
+              <td class="px-3 py-2">${item.receive_no_display || '-'}</td>
+              <td class="px-3 py-2">${item.request_no_display || '-'}<br><span class="text-xs">ฎีกา: ${item.dk_no_display || '-'}</span></td>
+              <td class="px-3 py-2">${item.money_type || '-'}<br><span class="text-xs">${item.dept || '-'}</span></td>
+              <td class="px-3 py-2">${item.vendor || '-'}<br><span class="text-xs">${item.description || '-'}</span></td>
+              <td class="px-3 py-2 text-right font-medium">${item.amount.toLocaleString()}</td>
+              <td class="px-3 py-2 text-center">
+                <button class="edit-item-btn text-blue-600 hover:text-blue-800 mr-2" data-uuid="${item.uuid}">✏️</button>
+                <button class="cancel-item-btn text-red-600 hover:text-red-800" data-uuid="${item.uuid}">${item.status === 'CANCELLED' ? '♻️' : '🗑️'}</button>
+              </td>
+            </tr>
+          `;
+        }
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+
+        container.querySelectorAll('.edit-item-btn').forEach(btn => {
+          btn.addEventListener('click', () => editItem(btn.dataset.uuid));
         });
+        container.querySelectorAll('.cancel-item-btn').forEach(btn => {
+          btn.addEventListener('click', () => cancelOrRecover(btn.dataset.uuid));
+        });
+      } catch (err) {
+        showToast('ค้นหาไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function editItem(uuid) {
+      // Simple edit: show prompt for amount, description, vendor
+      const { value: form } = await Swal.fire({
+        title: 'แก้ไขรายการ',
+        html: `
+          <input id="edit-amount" type="number" step="0.01" class="w-full border rounded px-3 py-2 mb-2" placeholder="จำนวนเงิน">
+          <input id="edit-vendor" class="w-full border rounded px-3 py-2 mb-2" placeholder="เจ้าหนี้/บริษัท">
+          <textarea id="edit-desc" class="w-full border rounded px-3 py-2" placeholder="รายการ"></textarea>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => ({
+          amount: parseFloat(document.getElementById('edit-amount').value),
+          vendor: document.getElementById('edit-vendor').value,
+          description: document.getElementById('edit-desc').value,
+        })
+      });
+      if (!form) return;
+      const data = {};
+      if (form.amount) data.amount = form.amount;
+      if (form.vendor) data.vendor = form.vendor;
+      if (form.description) data.description = form.description;
+      if (Object.keys(data).length === 0) { showToast('กรุณากรอกข้อมูลที่จะแก้ไข', 'warning'); return; }
+
+      showLoading('กำลังบันทึก...');
+      try {
+        const res = await register.update(uuid, data);
+        if (!res.success) throw new Error(res.error);
+        showToast('แก้ไขสำเร็จ', 'success');
+        searchEdit();
+      } catch (err) {
+        showToast('แก้ไขไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    async function cancelOrRecover(uuid) {
+      const item = await getItemByUuid(uuid);
+      if (!item) return;
+      if (item.status === 'CANCELLED') {
+        const confirm = await Swal.fire({ title: 'กู้คืนรายการ?', icon: 'question', showCancelButton: true });
         if (!confirm.isConfirmed) return;
         showLoading('กำลังกู้คืน...');
         try {
           const res = await register.recover(uuid);
           if (!res.success) throw new Error(res.error);
           showToast('กู้คืนสำเร็จ', 'success');
-          document.getElementById('editSearchBtn').click();
+          searchEdit();
         } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
+          showToast('กู้คืนไม่สำเร็จ: ' + err.message, 'error');
+        } finally { hideLoading(); }
       } else {
         const { value: note } = await Swal.fire({
           title: 'ยกเลิกรายการ',
           input: 'text',
-          inputLabel: 'หมายเหตุยกเลิก',
-          inputPlaceholder: 'ระบุเหตุผล...',
+          inputLabel: 'หมายเหตุ',
           showCancelButton: true,
           confirmButtonText: 'ยกเลิก',
-          cancelButtonText: 'กลับ',
-          inputValidator: (val) => {
-            if (!val) return 'กรุณากรอกหมายเหตุ';
-          }
         });
         if (note === undefined) return;
         showLoading('กำลังยกเลิก...');
         try {
-          const res = await register.cancel(uuid, note);
+          const res = await register.cancel(uuid, note || '');
           if (!res.success) throw new Error(res.error);
           showToast('ยกเลิกสำเร็จ', 'success');
-          document.getElementById('editSearchBtn').click();
+          searchEdit();
         } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
+          showToast('ยกเลิกไม่สำเร็จ: ' + err.message, 'error');
+        } finally { hideLoading(); }
       }
     }
 
-    // Backup
-    async function renderBackup(container) {
+    async function getItemByUuid(uuid) {
+      try {
+        const res = await register.list({ search: uuid, limit: 1 });
+        return res.success && res.data.data.length ? res.data.data[0] : null;
+      } catch { return null; }
+    }
+
+    // ---- 5.11.7 Backup & Restore ----
+    function renderBackup(container) {
       container.innerHTML = `
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Backup & Restore</h3>
-        <div class="space-y-4">
-          <button id="exportBackupBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">📥 Export (JSON)</button>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Restore (อัปโหลดไฟล์ JSON)</label>
-            <input type="file" id="restoreFileInput" accept=".json" class="block w-full text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-2">
-            <button id="restoreBtn" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">📤 Restore</button>
-          </div>
-          <div id="restoreResult" class="text-sm text-gray-500 dark:text-gray-400"></div>
+        <div class="flex flex-wrap gap-4">
+          <button id="backupExportBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded text-sm transition">📥 Export (JSON)</button>
+          <button id="backupImportBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm transition">📤 Import (JSON)</button>
         </div>
+        <div id="backupStatus" class="mt-4 text-sm text-gray-500 dark:text-gray-400"></div>
       `;
+      document.getElementById('backupExportBtn').addEventListener('click', exportBackup);
+      document.getElementById('backupImportBtn').addEventListener('click', importBackup);
+    }
 
-      document.getElementById('exportBackupBtn').addEventListener('click', async () => {
-        showLoading('กำลังสร้าง Backup...');
-        try {
-          const token = localStorage.getItem('srdh_token');
-          const response = await fetch('https://srdhpay-api.weerachaiartdesign.workers.dev/api/system/backup', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `backup_${new Date().toISOString().slice(0,10)}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-          showToast('ดาวน์โหลดสำเร็จ', 'success');
-        } catch (err) {
-          showToast(err.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      });
+    async function exportBackup() {
+      showLoading('กำลังส่งออก...');
+      try {
+        const res = await register.list({ limit: 10000, page: 1 });
+        if (!res.success) throw new Error(res.error);
+        const data = res.data.data || [];
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('ส่งออกสำเร็จ', 'success');
+      } catch (err) {
+        showToast('ส่งออกไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    }
 
-      document.getElementById('restoreBtn').addEventListener('click', async () => {
-        const fileInput = document.getElementById('restoreFileInput');
-        if (!fileInput.files || !fileInput.files[0]) {
-          showToast('กรุณาเลือกไฟล์', 'error');
-          return;
-        }
-        const file = fileInput.files[0];
+    async function importBackup() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
         const reader = new FileReader();
-        reader.onload = async function(e) {
+        reader.onload = async (ev) => {
           try {
-            const json = JSON.parse(e.target.result);
-            if (!Array.isArray(json)) {
-              showToast('ไฟล์ไม่ถูกต้อง (ต้องเป็น Array)', 'error');
-              return;
-            }
-            showLoading('กำลัง Restore...');
-            const token = localStorage.getItem('srdh_token');
-            const response = await fetch('https://srdhpay-api.weerachaiartdesign.workers.dev/api/system/backup', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              body: JSON.stringify({ data: json })
+            const data = JSON.parse(ev.target.result);
+            if (!Array.isArray(data)) throw new Error('รูปแบบข้อมูลไม่ถูกต้อง');
+            const confirm = await Swal.fire({
+              title: 'นำเข้าข้อมูล',
+              text: `จะนำเข้า ${data.length} รายการ`,
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: 'นำเข้า',
             });
-            const result = await response.json();
-            if (!result.success) throw new Error(result.error);
-            document.getElementById('restoreResult').innerHTML = `<span class="text-green-600">Restore สำเร็จ: ${result.data.restored} รายการ</span>`;
-            showToast('Restore สำเร็จ', 'success');
+            if (!confirm.isConfirmed) return;
+            showLoading('กำลังนำเข้า...');
+            // Import each item
+            let count = 0;
+            for (const item of data) {
+              try {
+                await register.import([item]);
+                count++;
+              } catch (e) { console.error(e); }
+            }
+            showToast(`นำเข้า ${count} รายการสำเร็จ`, 'success');
           } catch (err) {
-            showToast(err.message, 'error');
-            document.getElementById('restoreResult').innerHTML = `<span class="text-red-600">Error: ${err.message}</span>`;
+            showToast('นำเข้าไม่สำเร็จ: ' + err.message, 'error');
           } finally {
             hideLoading();
           }
         };
         reader.readAsText(file);
-      });
+      };
+      input.click();
     }
 
-    // Tab switching
+    // ---- Tab Navigation ----
     document.querySelectorAll('.settings-tab').forEach(tab => {
       tab.addEventListener('click', function() {
         document.querySelectorAll('.settings-tab').forEach(t => {
           t.classList.remove('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
-          t.classList.add('text-gray-500', 'dark:text-gray-400');
+          t.classList.add('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
         });
-        this.classList.remove('text-gray-500', 'dark:text-gray-400');
+        this.classList.remove('text-gray-500', 'hover:text-gray-700', 'dark:text-gray-400', 'dark:hover:text-gray-300');
         this.classList.add('text-purple-600', 'border-purple-600', 'dark:text-purple-400', 'dark:border-purple-400');
-        loadTab(this.dataset.tab);
+        renderTab(this.dataset.tab);
       });
     });
 
-    // Init
+    // ---- Init ----
     const user = requireRole(['admin', 'manager']);
     if (user) {
       await loadLayout();
-      loadTab('fiscal');
+      await loadMasterData();
+      // Default tab: fiscal
+      document.querySelector('[data-tab="fiscal"]').click();
     }
   </script>
 </body>
