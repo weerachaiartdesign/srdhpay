@@ -269,6 +269,9 @@ export async function initApp() {
   }
 }
 
+// Re-export จาก api.js เพื่อให้ import จาก app.js ได้สะดวก
+export { getCurrentUser, getToken, setToken, setCurrentUser };
+
 // Run on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM ready, calling initApp');
