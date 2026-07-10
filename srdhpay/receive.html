@@ -1,3 +1,4 @@
+<!-- receive.html (ปรับปรุงการเรียก users) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -7,6 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -80,7 +82,7 @@
   </div>
 
   <script type="module">
-    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
+    import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
     import { register, settings, users, statusMap, statusColors } from './js/api.js';
 
     let currentData = [];
@@ -92,10 +94,9 @@
 
     async function loadFilters() {
       try {
-        const [mtRes, deptRes, editorRes] = await Promise.all([
+        const [mtRes, deptRes] = await Promise.all([
           settings.get('money_type'),
           settings.get('dept'),
-          auth.me(),
         ]);
         if (mtRes.success) {
           moneyTypes = mtRes.data;
@@ -117,14 +118,21 @@
             sel.appendChild(opt);
           });
         }
-        // Editors (for assign)
-        import { users } from './js/api.js';
-        const usersData = await users.list();
-        if (usersData.success) {
-          editors = usersData.data.filter(u => u.role === 'editor' && u.active === 1);
+
+        // Load editors using users API
+        try {
+          const usersData = await users.list();
+          if (usersData.success) {
+            editors = usersData.data.filter(u => u.role === 'editor' && u.active === 1);
+            console.log('Editors loaded:', editors.length);
+          }
+        } catch (e) {
+          console.warn('Failed to load editors:', e);
         }
+
       } catch (e) {
         console.error('Failed to load filters:', e);
+        showToast('โหลดข้อมูลไม่สำเร็จ', 'error');
       }
     }
 
@@ -174,10 +182,11 @@
       for (const item of currentData) {
         const statusThai = statusMap[item.status] || item.status;
         const statusClass = statusColors[item.status] || 'bg-gray-100 text-gray-700';
+        const disabled = item.status !== currentMode;
         html += `
           <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-purple-50 dark:hover:bg-gray-700/50">
             <td class="px-3 py-2 text-center">
-              <input type="checkbox" class="row-checkbox" data-uuid="${item.uuid}" ${item.status === currentMode ? '' : 'disabled'}>
+              <input type="checkbox" class="row-checkbox" data-uuid="${item.uuid}" ${disabled ? 'disabled' : ''}>
             </td>
             <td class="px-3 py-2"><span class="status-badge ${statusClass}">${statusThai}</span></td>
             <td class="px-3 py-2">
@@ -218,7 +227,6 @@
       }
       tbody.innerHTML = html;
 
-      // Checkbox events
       document.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.addEventListener('change', updateSelection);
       });
@@ -348,7 +356,6 @@
     if (user) {
       await loadLayout();
       await loadFilters();
-      // Default load: WAITING
       currentMode = 'WAITING';
       loadData('WAITING');
     }
