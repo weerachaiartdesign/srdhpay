@@ -53,6 +53,7 @@ export function toggleSidebar() {
   if (sidebar) {
     sidebar.classList.toggle('hidden');
     sidebar.classList.toggle('block');
+    // เปลี่ยนไอคอน hamburger เป็นปิด (optional)
   }
 }
 
@@ -97,6 +98,7 @@ export function toggleDarkMode() {
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
   updateDarkModeIcon();
+  // Update user preference if logged in
   const user = getCurrentUser();
   if (user) {
     // Optionally update via API later
@@ -138,6 +140,7 @@ function setupDarkModeToggle() {
 // ---- User Info in Header ----
 function setupUserInfo() {
   const user = getCurrentUser();
+  console.log('setupUserInfo - user:', user);
   if (user) {
     const nameEl = document.getElementById('userName');
     const roleEl = document.getElementById('userRole');
