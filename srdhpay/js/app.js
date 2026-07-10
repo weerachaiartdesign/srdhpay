@@ -48,19 +48,83 @@ export async function loadLayout() {
     throw err;
   }
 }
+
 // ---- Hamburger Toggle ----
 export function toggleSidebar() {
   const sidebar = document.getElementById('sidebar-container');
-  if (sidebar) {
-    sidebar.classList.toggle('hidden');
-    sidebar.classList.toggle('block');
+  if (!sidebar) return;
+  
+  // ใช้ class hidden สลับ
+  if (sidebar.classList.contains('hidden')) {
+    sidebar.classList.remove('hidden');
+    sidebar.style.display = 'flex'; // หรือ 'block' ก็ได้
+  } else {
+    sidebar.classList.add('hidden');
+    sidebar.style.display = 'none';
   }
 }
 
 function setupHamburger() {
   const btn = document.getElementById('hamburgerBtn');
   if (btn) {
+    // ลบ event listener เก่า (ถ้ามี) เพื่อป้องกันการซ้อน
+    btn.removeEventListener('click', toggleSidebar);
     btn.addEventListener('click', toggleSidebar);
+    console.log('Hamburger button setup complete');
+  } else {
+    console.warn('Hamburger button not found');
+  }
+}
+
+// ---- Load Layout (ปรับปรุง) ----
+export async function loadLayout() {
+  console.log('Loading layout...');
+  try {
+    await loadComponent('#header-container', '/header.html');
+    await loadComponent('#sidebar-container', '/sidebar.html');
+    setupUserInfo();
+    setupDarkModeToggle();
+    highlightActiveMenu();
+    setupHamburger(); // เรียกหลังจาก header โหลดเสร็จ
+    initSidebarVisibility(); // เรียกเพื่อปรับเมนูตาม Role (ถ้ามี)
+    console.log('Layout loaded successfully');
+  } catch (err) {
+    console.error('Layout loading failed:', err);
+    showToast('เกิดข้อผิดพลาดในการโหลดหน้าเว็บ กรุณารีเฟรช', 'error');
+    throw err;
+  }
+}
+
+// ---- Sidebar Visibility (ปรับตาม Role) ----
+export function initSidebarVisibility() {
+  try {
+    const user = getCurrentUser();
+    if (!user) {
+      console.log('No user, sidebar uses default (guest)');
+      return;
+    }
+    const role = user.role || 'guest';
+    
+    // กำหนดเมนูที่ควรแสดงตาม Role
+    const menuConfig = {
+      guest: ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings', 'menuSystem'],
+      staff: ['menuSystem'],
+      editor: ['menuPayment', 'menuReport', 'menuAuth', 'menuSettings', 'menuSystem'],
+      checker: ['menuReport', 'menuAuth', 'menuSettings', 'menuSystem'],
+      manager: ['menuSystem'],
+      admin: []
+    };
+    
+    const hiddenMenus = menuConfig[role] || menuConfig.guest;
+    hiddenMenus.forEach(menuId => {
+      const el = document.getElementById(menuId);
+      if (el) {
+        el.style.display = 'none';
+      }
+    });
+    console.log('Sidebar visibility applied for role:', role);
+  } catch (err) {
+    console.warn('Sidebar visibility error:', err);
   }
 }
 
