@@ -1,3 +1,4 @@
+<!-- dashboard.html (ปรับปรุงสำหรับ Guest) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -8,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -37,14 +38,18 @@
           <p class="text-gray-600 dark:text-gray-400" id="fiscalYearText">ภาพรวมการเบิกจ่ายเงิน ปีงบประมาณ 2569</p>
         </div>
 
-        <!-- Error Message (if any) -->
+        <!-- Error Message -->
         <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
           <span id="errorText"></span>
         </div>
 
+        <!-- Guest Message -->
+        <div id="guestMessage" class="hidden bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative mb-4">
+          👤 โหมดผู้เยี่ยมชม - ดูข้อมูลแบบอ่านอย่างเดียว
+        </div>
+
         <!-- Summary Cards -->
         <div id="summaryCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <!-- Rendered by JS -->
           <div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">กำลังโหลดข้อมูล...</div>
         </div>
 
@@ -87,8 +92,8 @@
   </div>
 
   <script type="module">
-    import { loadLayout, requireAuth, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
-    import { register, report, getCurrentUser } from './js/api.js';
+    import { loadLayout, requireAuth, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
+    import { register, report, settings } from './js/api.js';
 
     let deptChart, moneyTypeChart, monthlyChart;
 
@@ -97,7 +102,24 @@
       showLoading('กำลังโหลดข้อมูล...');
       
       try {
-        // ดึงข้อมูลสรุป
+        const user = getCurrentUser();
+        const isGuest = user?.role === 'guest';
+
+        // Guest: แสดงข้อความและโหลดเฉพาะสถิติพื้นฐาน
+        if (isGuest) {
+          document.getElementById('guestMessage').classList.remove('hidden');
+          document.getElementById('summaryCards').innerHTML = `
+            <div class="col-span-full text-center text-gray-500 dark:text-gray-400 py-8">
+              👤 โหมดผู้เยี่ยมชม - ดูข้อมูลแบบอ่านอย่างเดียว
+            </div>
+          `;
+          await loadStats();
+          await loadMonthlyChart();
+          hideLoading();
+          return;
+        }
+
+        // Admin/Manager: โหลดเต็มรูปแบบ
         console.log('Fetching report summary...');
         const summaryRes = await report.summary();
         console.log('Summary result:', summaryRes);
@@ -109,13 +131,9 @@
         renderDeptChart(data);
         renderMoneyTypeChart(data);
 
-        // โหลดสถิติเพิ่มเติม
         await loadStats();
-
-        // โหลดกราฟรายเดือน
         await loadMonthlyChart();
 
-        // ซ่อนข้อความผิดพลาดถ้ามี
         document.getElementById('errorMessage').classList.add('hidden');
 
       } catch (err) {
@@ -129,6 +147,7 @@
       }
     }
 
+    // ---- ส่วน render ต่างๆ (เหมือนเดิม) ----
     function renderSummaryCards(data) {
       const container = document.getElementById('summaryCards');
       if (!data || !data.matrix) {
