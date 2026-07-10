@@ -29,7 +29,7 @@ async function loadComponent(selector, url) {
   }
 }
 
-// Load header and sidebar
+// ---- Load Layout (ประกาศครั้งเดียว) ----
 export async function loadLayout() {
   console.log('Loading layout...');
   try {
@@ -39,7 +39,6 @@ export async function loadLayout() {
     setupDarkModeToggle();
     highlightActiveMenu();
     setupHamburger();
-    // เรียกใช้ฟังก์ชันนี้หลังจาก sidebar โหลดเสร็จ
     initSidebarVisibility();
     console.log('Layout loaded successfully');
   } catch (err) {
@@ -53,11 +52,9 @@ export async function loadLayout() {
 export function toggleSidebar() {
   const sidebar = document.getElementById('sidebar-container');
   if (!sidebar) return;
-  
-  // ใช้ class hidden สลับ
   if (sidebar.classList.contains('hidden')) {
     sidebar.classList.remove('hidden');
-    sidebar.style.display = 'flex'; // หรือ 'block' ก็ได้
+    sidebar.style.display = 'flex';
   } else {
     sidebar.classList.add('hidden');
     sidebar.style.display = 'none';
@@ -67,31 +64,11 @@ export function toggleSidebar() {
 function setupHamburger() {
   const btn = document.getElementById('hamburgerBtn');
   if (btn) {
-    // ลบ event listener เก่า (ถ้ามี) เพื่อป้องกันการซ้อน
     btn.removeEventListener('click', toggleSidebar);
     btn.addEventListener('click', toggleSidebar);
     console.log('Hamburger button setup complete');
   } else {
     console.warn('Hamburger button not found');
-  }
-}
-
-// ---- Load Layout (ปรับปรุง) ----
-export async function loadLayout() {
-  console.log('Loading layout...');
-  try {
-    await loadComponent('#header-container', '/header.html');
-    await loadComponent('#sidebar-container', '/sidebar.html');
-    setupUserInfo();
-    setupDarkModeToggle();
-    highlightActiveMenu();
-    setupHamburger(); // เรียกหลังจาก header โหลดเสร็จ
-    initSidebarVisibility(); // เรียกเพื่อปรับเมนูตาม Role (ถ้ามี)
-    console.log('Layout loaded successfully');
-  } catch (err) {
-    console.error('Layout loading failed:', err);
-    showToast('เกิดข้อผิดพลาดในการโหลดหน้าเว็บ กรุณารีเฟรช', 'error');
-    throw err;
   }
 }
 
@@ -104,8 +81,6 @@ export function initSidebarVisibility() {
       return;
     }
     const role = user.role || 'guest';
-    
-    // กำหนดเมนูที่ควรแสดงตาม Role
     const menuConfig = {
       guest: ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings', 'menuSystem'],
       staff: ['menuSystem'],
@@ -114,7 +89,6 @@ export function initSidebarVisibility() {
       manager: ['menuSystem'],
       admin: []
     };
-    
     const hiddenMenus = menuConfig[role] || menuConfig.guest;
     hiddenMenus.forEach(menuId => {
       const el = document.getElementById(menuId);
@@ -162,10 +136,6 @@ export function toggleDarkMode() {
   const isDark = html.classList.toggle('dark');
   localStorage.setItem('srdh_darkmode', isDark ? '1' : '0');
   updateDarkModeIcon();
-  const user = getCurrentUser();
-  if (user) {
-    // Optionally update via API later
-  }
 }
 
 export function loadDarkModePreference() {
@@ -308,22 +278,17 @@ export function formatThaiDate(dateStr) {
 export async function initApp() {
   console.log('initApp called, path:', window.location.pathname);
   loadDarkModePreference();
-  
   if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
     console.log('Login page, skipping layout');
     return;
   }
-
   try {
     await loadLayout();
     console.log('Layout loaded');
   } catch (err) {
     console.error('initApp layout error:', err);
     showToast('ไม่สามารถโหลดส่วนประกอบของหน้าได้ กรุณารีเฟรช', 'error');
-    // ถึงแม้ loadLayout จะล้มเหลว ระบบก็ยังพยายามทำงานต่อ
-    // แต่ควรแจ้งผู้ใช้
   }
-
   const publicPages = ['index.html', ''];
   const current = window.location.pathname.split('/').pop();
   if (!publicPages.includes(current) && current !== '') {
@@ -334,78 +299,18 @@ export async function initApp() {
   }
 }
 
-// Re-export จาก api.js เพื่อให้ import จาก app.js ได้สะดวก
+// ---- Re-export from api.js ----
 export { getCurrentUser, getToken, setToken, setCurrentUser };
 
-// ---- เรียกใช้ Sidebar Visibility หลังจากโหลด Sidebar เสร็จ ----
-export function initSidebarVisibility() {
-  // ตรวจสอบว่า sidebar ถูกโหลดหรือยัง
-  const sidebar = document.getElementById('sidebar-container');
-  if (!sidebar) return;
-  
-  // รอให้ script ใน sidebar ทำงานก่อน
-  setTimeout(() => {
-    // ตรวจสอบว่ามี user หรือไม่
-    const user = getCurrentUser();
-    if (!user) {
-      console.log('No user, sidebar will use guest mode');
-      return;
-    }
-    
-    // ถ้ามี user และ sidebar ยังไม่ถูกปรับ ให้บังคับปรับอีกครั้ง
-    // โดยเรียกใช้ฟังก์ชัน initSidebar ใน sidebar (ถ้ามี)
-    try {
-      // ตรวจสอบว่า sidebar มีฟังก์ชัน initSidebar หรือไม่
-      const sidebarScript = sidebar.querySelector('script');
-      if (sidebarScript && typeof window.initSidebar === 'function') {
-        window.initSidebar();
-      } else {
-        // ถ้าไม่มี ให้เช็ค role และซ่อน/แสดงเมนูด้วยตัวเอง
-        applyMenuVisibility(user);
-      }
-    } catch (e) {
-      console.warn('Sidebar visibility fallback:', e);
-    }
-  }, 100);
-}
-
-function applyMenuVisibility(user) {
-  const role = user.role || 'guest';
-  const menuIds = ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings', 'menuSystem'];
-  
-  // กำหนดว่า role ไหนควรเห็นเมนูอะไร
-  const visibleMenus = {
-    admin: menuIds,  // admin เห็นทุกอย่าง
-    manager: ['menuImport', 'menuReceive', 'menuVerify', 'menuApprove', 'menuPayment', 'menuReport', 'menuAuth', 'menuSettings'],
-    editor: ['menuImport', 'menuReceive', 'menuVerify'],
-    checker: ['menuImport', 'menuReceive', 'menuVerify', 'menuPayment'],
-    staff: ['menuImport'],
-    guest: []  // guest ไม่เห็นอะไรเลย (เหลือแค่ Dashboard + List)
-  };
-  
-  const visible = visibleMenus[role] || [];
-  
-  menuIds.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      if (visible.includes(id)) {
-        el.style.display = 'block';
-      } else {
-        el.style.display = 'none';
-      }
-    }
-  });
-}
-
-// Run on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM ready, calling initApp');
-  initApp();
-});
-
-// Expose functions globally
+// ---- Expose global functions ----
 window.logout = logout;
 window.showToast = showToast;
 window.showLoading = showLoading;
 window.hideLoading = hideLoading;
 window.toggleSidebar = toggleSidebar;
+
+// ---- DOM Ready ----
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM ready, calling initApp');
+  initApp();
+});
