@@ -7,6 +7,7 @@
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: 'Prompt', sans-serif; }
@@ -18,11 +19,9 @@
     <div id="sidebar-container"></div>
     <main class="flex-1 p-4 md:p-6 overflow-y-auto">
       <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าผู้ใช้งาน</h1>
-            <p class="text-gray-600 dark:text-gray-400">จัดการข้อมูลผู้ใช้งาน</p>
-          </div>
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-800 dark:text-white">ตั้งค่าผู้ใช้งาน</h1>
+          <p class="text-gray-600 dark:text-gray-400">จัดการข้อมูลผู้ใช้งาน</p>
         </div>
 
         <!-- Tabs -->
@@ -32,8 +31,8 @@
         </div>
 
         <!-- Profile Section -->
-        <div id="profileSection" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 max-w-xl">
-          <div class="space-y-4">
+        <div id="profileSection" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">อีเมล</label>
               <input type="text" id="profileEmail" disabled class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
@@ -41,7 +40,7 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">รหัสผ่าน</label>
               <div class="flex gap-2">
-                <input type="password" id="profilePassword" value="********" disabled class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                <input type="password" id="profilePassword" value="••••••••" disabled class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
                 <button id="changePasswordBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">เปลี่ยนรหัส</button>
               </div>
             </div>
@@ -61,7 +60,9 @@
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">สิทธิ์</label>
               <input type="text" id="profileRole" disabled class="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
             </div>
-            <button id="saveProfileBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded text-sm transition">บันทึกข้อมูล</button>
+          </div>
+          <div class="mt-4 flex justify-end">
+            <button id="saveProfileBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded text-sm transition">บันทึก</button>
           </div>
         </div>
 
@@ -69,22 +70,25 @@
         <div id="usersSection" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hidden">
           <div class="flex justify-between items-center mb-4">
             <div>
-              <span class="text-sm text-gray-500 dark:text-gray-400" id="userStats">กำลังโหลด...</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">ผู้ใช้ที่ใช้งาน: <span id="activeCount" class="font-medium text-green-600 dark:text-green-400">0</span></span>
+              <span class="text-sm text-gray-500 dark:text-gray-400 ml-4">ไม่ใช้งาน: <span id="inactiveCount" class="font-medium text-red-600 dark:text-red-400">0</span></span>
             </div>
-            <button id="addUserBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition">+ เพิ่มผู้ใช้ใหม่</button>
+            <button id="addUserBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm transition flex items-center gap-1">
+              <span class="text-lg">+</span> เพิ่มผู้ใช้ใหม่
+            </button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
-              <thead class="bg-purple-50 dark:bg-purple-900/30">
+              <thead class="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th class="px-3 py-2 text-left">อีเมล</th>
                   <th class="px-3 py-2 text-left">ชื่อ-สกุล</th>
                   <th class="px-3 py-2 text-left">หน่วยงาน</th>
-                  <th class="px-3 py-2 text-center">สถานะ</th>
-                  <th class="px-3 py-2 text-center">การจัดการ</th>
+                  <th class="px-3 py-2 text-left">สถานะ</th>
+                  <th class="px-3 py-2 text-center">จัดการ</th>
                 </tr>
               </thead>
-              <tbody id="usersBody">
+              <tbody id="usersTableBody">
                 <tr><td colspan="5" class="text-center py-8 text-gray-500 dark:text-gray-400">กำลังโหลด...</td></tr>
               </tbody>
             </table>
@@ -95,99 +99,74 @@
   </div>
 
   <script type="module">
-    import { loadLayout, requireAuth, formatThaiDate, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
+    import { loadLayout, requireRole, showToast, showLoading, hideLoading, getCurrentUser } from './js/app.js';
     import { users, auth, settings } from './js/api.js';
 
-    let currentUser = getCurrentUser();
     let userList = [];
 
     async function loadProfile() {
-      try {
-        const res = await auth.me();
-        if (!res.success) throw new Error(res.error);
-        const user = res.data;
-        document.getElementById('profileEmail').value = user.email || '';
-        document.getElementById('profileUsername').value = user.username || '';
-        document.getElementById('profilePosition').value = user.position || '';
-        document.getElementById('profileDept').value = user.dept || '';
-        const roleMap = {
-          admin: 'ผู้ดูแลระบบ',
-          manager: 'ผู้จัดการ',
-          editor: 'ผู้ตรวจ',
-          checker: 'ผู้จ่าย',
-          staff: 'เจ้าหน้าที่',
-          guest: 'ผู้เยี่ยมชม',
-        };
-        document.getElementById('profileRole').value = roleMap[user.role] || user.role;
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
+      const user = getCurrentUser();
+      if (!user) return;
+      document.getElementById('profileEmail').value = user.email || '';
+      document.getElementById('profileUsername').value = user.username || '';
+      document.getElementById('profilePosition').value = user.position || '';
+      document.getElementById('profileDept').value = user.dept || '';
+      const roleMap = { admin: 'ผู้ดูแลระบบ', manager: 'ผู้จัดการ', editor: 'ผู้ตรวจ', checker: 'ผู้จ่าย', staff: 'เจ้าหน้าที่', guest: 'ผู้เยี่ยมชม' };
+      document.getElementById('profileRole').value = roleMap[user.role] || user.role;
     }
 
     async function loadUsers() {
-      showLoading('กำลังโหลด...');
+      showLoading('กำลังโหลดผู้ใช้...');
       try {
         const res = await users.list();
         if (!res.success) throw new Error(res.error);
         userList = res.data || [];
         renderUsers();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast('โหลดผู้ใช้ไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
     function renderUsers() {
-      const tbody = document.getElementById('usersBody');
+      const tbody = document.getElementById('usersTableBody');
+      const active = userList.filter(u => u.active === 1).length;
+      const inactive = userList.filter(u => u.active === 0).length;
+      document.getElementById('activeCount').textContent = active;
+      document.getElementById('inactiveCount').textContent = inactive;
+
       if (!userList.length) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-500 dark:text-gray-400">ไม่มีผู้ใช้งาน</td></tr>`;
-        document.getElementById('userStats').textContent = 'ไม่มีข้อมูล';
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-500 dark:text-gray-400">ไม่มีผู้ใช้</td></tr>`;
         return;
       }
+
       let html = '';
-      let activeCount = 0;
       for (const u of userList) {
-        if (u.active === 1) activeCount++;
-        const roleMap = {
-          admin: 'ผู้ดูแลระบบ',
-          manager: 'ผู้จัดการ',
-          editor: 'ผู้ตรวจ',
-          checker: 'ผู้จ่าย',
-          staff: 'เจ้าหน้าที่',
-          guest: 'ผู้เยี่ยมชม',
-        };
-        html += `<tr class="border-b border-gray-100 dark:border-gray-700">
-          <td class="px-3 py-2">${u.email}</td>
-          <td class="px-3 py-2">${u.username}</td>
-          <td class="px-3 py-2">${u.dept || '-'}</td>
-          <td class="px-3 py-2 text-center">
-            <span class="px-2 py-1 rounded text-xs ${u.active === 1 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'}">
-              ${u.active === 1 ? 'ใช้งาน' : 'ปิดใช้งาน'}
-            </span>
-          </td>
-          <td class="px-3 py-2 text-center">
-            <div class="flex flex-wrap justify-center gap-1">
-              <button class="edit-user-btn text-blue-600 hover:text-blue-800 text-xs" data-id="${u.id}">แก้ไข</button>
-              <button class="reset-pwd-btn text-yellow-600 hover:text-yellow-800 text-xs" data-id="${u.id}">รีเซ็ต</button>
-              <button class="toggle-user-btn text-${u.active === 1 ? 'red' : 'green'}-600 hover:text-${u.active === 1 ? 'red' : 'green'}-800 text-xs" data-id="${u.id}">${u.active === 1 ? 'ปิด' : 'เปิด'}</button>
-              <button class="delete-user-btn text-red-600 hover:text-red-800 text-xs" data-id="${u.id}">ลบ</button>
-            </div>
-          </td>
-        </tr>`;
+        const statusText = u.active === 1 ? '✅ ใช้งาน' : '❌ ไม่ใช้งาน';
+        const statusClass = u.active === 1 ? 'text-green-600' : 'text-red-600';
+        html += `
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <td class="px-3 py-2">${u.email}</td>
+            <td class="px-3 py-2">${u.username}</td>
+            <td class="px-3 py-2">${u.dept || '-'}</td>
+            <td class="px-3 py-2"><span class="${statusClass}">${statusText}</span></td>
+            <td class="px-3 py-2 text-center">
+              <button class="edit-user-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${u.id}">✏️</button>
+              <button class="reset-pwd-btn text-yellow-600 hover:text-yellow-800 mr-2" data-email="${u.email}">🔑</button>
+              <button class="delete-user-btn text-red-600 hover:text-red-800" data-id="${u.id}">🗑️</button>
+            </td>
+          </tr>
+        `;
       }
       tbody.innerHTML = html;
-      document.getElementById('userStats').textContent = `ใช้งาน ${activeCount} / ทั้งหมด ${userList.length}`;
 
-      // Add event listeners
+      // Event listeners
       tbody.querySelectorAll('.edit-user-btn').forEach(btn => {
         btn.addEventListener('click', () => editUser(parseInt(btn.dataset.id)));
       });
       tbody.querySelectorAll('.reset-pwd-btn').forEach(btn => {
-        btn.addEventListener('click', () => resetPassword(parseInt(btn.dataset.id)));
-      });
-      tbody.querySelectorAll('.toggle-user-btn').forEach(btn => {
-        btn.addEventListener('click', () => toggleUser(parseInt(btn.dataset.id)));
+        btn.addEventListener('click', () => resetPassword(btn.dataset.email));
       });
       tbody.querySelectorAll('.delete-user-btn').forEach(btn => {
         btn.addEventListener('click', () => deleteUser(parseInt(btn.dataset.id)));
@@ -195,157 +174,126 @@
     }
 
     async function editUser(id) {
-      const user = userList.find(u => u.id === id);
-      if (!user) return;
-      const { value: formValues } = await Swal.fire({
+      const u = userList.find(x => x.id === id);
+      if (!u) return;
+      const roleMap = { admin: 'ผู้ดูแลระบบ', manager: 'ผู้จัดการ', editor: 'ผู้ตรวจ', checker: 'ผู้จ่าย', staff: 'เจ้าหน้าที่', guest: 'ผู้เยี่ยมชม' };
+      const roles = ['admin', 'manager', 'editor', 'checker', 'staff', 'guest'];
+      const { value: form } = await Swal.fire({
         title: 'แก้ไขผู้ใช้',
         html: `
           <div class="text-left">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ชื่อ-สกุล</label>
-            <input id="editUsername" class="w-full border rounded px-3 py-2 mt-1" value="${user.username}">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">ตำแหน่ง</label>
-            <input id="editPosition" class="w-full border rounded px-3 py-2 mt-1" value="${user.position || ''}">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">หน่วยงาน</label>
-            <input id="editDept" class="w-full border rounded px-3 py-2 mt-1" value="${user.dept || ''}">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">สิทธิ์</label>
-            <select id="editRole" class="w-full border rounded px-3 py-2 mt-1">
-              <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>ผู้ดูแลระบบ</option>
-              <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>ผู้จัดการ</option>
-              <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>ผู้ตรวจ</option>
-              <option value="checker" ${user.role === 'checker' ? 'selected' : ''}>ผู้จ่าย</option>
-              <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>เจ้าหน้าที่</option>
+            <label class="block text-sm font-medium">ชื่อ-สกุล</label>
+            <input id="swal-username" class="w-full border rounded px-3 py-2 mb-2" value="${u.username}">
+            <label class="block text-sm font-medium">ตำแหน่ง</label>
+            <input id="swal-position" class="w-full border rounded px-3 py-2 mb-2" value="${u.position || ''}">
+            <label class="block text-sm font-medium">หน่วยงาน</label>
+            <input id="swal-dept" class="w-full border rounded px-3 py-2 mb-2" value="${u.dept || ''}">
+            <label class="block text-sm font-medium">สิทธิ์</label>
+            <select id="swal-role" class="w-full border rounded px-3 py-2 mb-2">
+              ${roles.map(r => `<option value="${r}" ${r === u.role ? 'selected' : ''}>${roleMap[r]}</option>`).join('')}
+            </select>
+            <label class="block text-sm font-medium">สถานะ</label>
+            <select id="swal-active" class="w-full border rounded px-3 py-2">
+              <option value="1" ${u.active === 1 ? 'selected' : ''}>ใช้งาน</option>
+              <option value="0" ${u.active === 0 ? 'selected' : ''}>ไม่ใช้งาน</option>
             </select>
           </div>
         `,
         showCancelButton: true,
         confirmButtonText: 'บันทึก',
         cancelButtonText: 'ยกเลิก',
-        preConfirm: () => {
-          return {
-            username: document.getElementById('editUsername').value,
-            position: document.getElementById('editPosition').value,
-            dept: document.getElementById('editDept').value,
-            role: document.getElementById('editRole').value,
-          };
-        }
+        preConfirm: () => ({
+          username: document.getElementById('swal-username').value,
+          position: document.getElementById('swal-position').value,
+          dept: document.getElementById('swal-dept').value,
+          role: document.getElementById('swal-role').value,
+          active: parseInt(document.getElementById('swal-active').value),
+        })
       });
-      if (!formValues) return;
+      if (!form) return;
 
       showLoading('กำลังบันทึก...');
       try {
-        const res = await users.update(id, formValues);
+        const res = await users.update(id, form);
         if (!res.success) throw new Error(res.error);
-        showToast('บันทึกสำเร็จ', 'success');
+        showToast('แก้ไขผู้ใช้สำเร็จ', 'success');
         loadUsers();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast('แก้ไขไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
-    async function resetPassword(id) {
-      const user = userList.find(u => u.id === id);
-      if (!user) return;
+    async function resetPassword(email) {
       const confirm = await Swal.fire({
         title: 'รีเซ็ตรหัสผ่าน',
-        text: `จะรีเซ็ตรหัสผ่านสำหรับ ${user.email}`,
-        icon: 'question',
+        text: `จะรีเซ็ตรหัสผ่านของผู้ใช้ ${email} เป็นค่าเริ่มต้น`,
+        icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'ยืนยัน',
         cancelButtonText: 'ยกเลิก',
       });
       if (!confirm.isConfirmed) return;
-      showLoading('กำลังดำเนินการ...');
+
+      showLoading('กำลังรีเซ็ต...');
       try {
-        const res = await users.resetPassword(user.email);
+        const res = await users.resetPassword(email);
         if (!res.success) throw new Error(res.error);
         showToast('รีเซ็ตรหัสผ่านสำเร็จ', 'success');
       } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        hideLoading();
-      }
-    }
-
-    async function toggleUser(id) {
-      const user = userList.find(u => u.id === id);
-      if (!user) return;
-      const newStatus = user.active === 1 ? 0 : 1;
-      const confirm = await Swal.fire({
-        title: newStatus === 0 ? 'ปิดใช้งาน' : 'เปิดใช้งาน',
-        text: `จะ${newStatus === 0 ? 'ปิด' : 'เปิด'}ใช้งาน ${user.email}`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'ยืนยัน',
-        cancelButtonText: 'ยกเลิก',
-      });
-      if (!confirm.isConfirmed) return;
-      showLoading('กำลังดำเนินการ...');
-      try {
-        const res = await users.update(id, { active: newStatus });
-        if (!res.success) throw new Error(res.error);
-        showToast('สำเร็จ', 'success');
-        loadUsers();
-      } catch (err) {
-        showToast(err.message, 'error');
+        showToast('รีเซ็ตไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
     async function deleteUser(id) {
-      const user = userList.find(u => u.id === id);
-      if (!user) return;
-      if (user.email === currentUser.email) {
-        showToast('ไม่สามารถลบตัวเองได้', 'error');
-        return;
-      }
+      const u = userList.find(x => x.id === id);
+      if (!u) return;
       const confirm = await Swal.fire({
         title: 'ลบผู้ใช้',
-        text: `จะลบ ${user.email} อย่างถาวร`,
-        icon: 'warning',
+        text: `จะลบผู้ใช้ ${u.username} (${u.email})`,
+        icon: 'error',
         showCancelButton: true,
-        confirmButtonText: 'ลบ',
+        confirmButtonText: 'ยืนยัน',
         cancelButtonText: 'ยกเลิก',
-        confirmButtonColor: '#d33',
       });
       if (!confirm.isConfirmed) return;
-      showLoading('กำลังดำเนินการ...');
+
+      showLoading('กำลังลบ...');
       try {
         const res = await users.delete(id);
         if (!res.success) throw new Error(res.error);
-        showToast('ลบสำเร็จ', 'success');
+        showToast('ลบผู้ใช้สำเร็จ', 'success');
         loadUsers();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast('ลบไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
 
     async function addUser() {
-      const { value: formValues } = await Swal.fire({
+      const roleMap = { admin: 'ผู้ดูแลระบบ', manager: 'ผู้จัดการ', editor: 'ผู้ตรวจ', checker: 'ผู้จ่าย', staff: 'เจ้าหน้าที่', guest: 'ผู้เยี่ยมชม' };
+      const roles = ['admin', 'manager', 'editor', 'checker', 'staff', 'guest'];
+      const { value: form } = await Swal.fire({
         title: 'เพิ่มผู้ใช้ใหม่',
         html: `
           <div class="text-left">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">อีเมล *</label>
-            <input id="addEmail" class="w-full border rounded px-3 py-2 mt-1" type="email" placeholder="user@example.com">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">รหัสผ่าน *</label>
-            <input id="addPassword" class="w-full border rounded px-3 py-2 mt-1" type="password" placeholder="••••••••">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">ชื่อ-สกุล *</label>
-            <input id="addUsername" class="w-full border rounded px-3 py-2 mt-1" placeholder="ชื่อ-สกุล">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">ตำแหน่ง</label>
-            <input id="addPosition" class="w-full border rounded px-3 py-2 mt-1" placeholder="ตำแหน่ง">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">หน่วยงาน *</label>
-            <input id="addDept" class="w-full border rounded px-3 py-2 mt-1" placeholder="หน่วยงาน">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-3">สิทธิ์ *</label>
-            <select id="addRole" class="w-full border rounded px-3 py-2 mt-1">
-              <option value="admin">ผู้ดูแลระบบ</option>
-              <option value="manager">ผู้จัดการ</option>
-              <option value="editor">ผู้ตรวจ</option>
-              <option value="checker">ผู้จ่าย</option>
-              <option value="staff" selected>เจ้าหน้าที่</option>
+            <label class="block text-sm font-medium">อีเมล</label>
+            <input id="swal-email" class="w-full border rounded px-3 py-2 mb-2" type="email" placeholder="user@example.com">
+            <label class="block text-sm font-medium">รหัสผ่านชั่วคราว</label>
+            <input id="swal-password" class="w-full border rounded px-3 py-2 mb-2" type="text" placeholder="รหัสผ่านเริ่มต้น">
+            <label class="block text-sm font-medium">ชื่อ-สกุล</label>
+            <input id="swal-username" class="w-full border rounded px-3 py-2 mb-2" placeholder="ชื่อ-สกุล">
+            <label class="block text-sm font-medium">ตำแหน่ง</label>
+            <input id="swal-position" class="w-full border rounded px-3 py-2 mb-2" placeholder="ตำแหน่ง">
+            <label class="block text-sm font-medium">หน่วยงาน</label>
+            <input id="swal-dept" class="w-full border rounded px-3 py-2 mb-2" placeholder="หน่วยงาน">
+            <label class="block text-sm font-medium">สิทธิ์</label>
+            <select id="swal-role" class="w-full border rounded px-3 py-2">
+              ${roles.map(r => `<option value="${r}">${roleMap[r]}</option>`).join('')}
             </select>
           </div>
         `,
@@ -353,90 +301,37 @@
         confirmButtonText: 'เพิ่ม',
         cancelButtonText: 'ยกเลิก',
         preConfirm: () => {
-          const email = document.getElementById('addEmail').value;
-          const password = document.getElementById('addPassword').value;
-          const username = document.getElementById('addUsername').value;
-          const dept = document.getElementById('addDept').value;
-          const role = document.getElementById('addRole').value;
-          if (!email || !password || !username || !dept) {
-            Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบ (*)');
-            return;
+          const email = document.getElementById('swal-email').value;
+          const password = document.getElementById('swal-password').value;
+          const username = document.getElementById('swal-username').value;
+          if (!email || !password || !username) {
+            Swal.showValidationMessage('กรุณากรอกอีเมล รหัสผ่าน และชื่อ-สกุล');
+            return false;
           }
           return {
             email,
             password,
             username,
-            position: document.getElementById('addPosition').value,
-            dept,
-            role,
+            position: document.getElementById('swal-position').value,
+            dept: document.getElementById('swal-dept').value,
+            role: document.getElementById('swal-role').value,
           };
         }
       });
-      if (!formValues) return;
+      if (!form) return;
 
-      showLoading('กำลังเพิ่ม...');
+      showLoading('กำลังเพิ่มผู้ใช้...');
       try {
-        const res = await users.create(formValues);
+        const res = await users.create(form);
         if (!res.success) throw new Error(res.error);
         showToast('เพิ่มผู้ใช้สำเร็จ', 'success');
         loadUsers();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast('เพิ่มไม่สำเร็จ: ' + err.message, 'error');
       } finally {
         hideLoading();
       }
     }
-
-    // Save profile
-    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
-      const username = document.getElementById('profileUsername').value;
-      const position = document.getElementById('profilePosition').value;
-      if (!username) {
-        showToast('กรุณากรอกชื่อ-สกุล', 'error');
-        return;
-      }
-      showLoading('กำลังบันทึก...');
-      try {
-        const res = await users.update(currentUser.id, { username, position });
-        if (!res.success) throw new Error(res.error);
-        showToast('บันทึกข้อมูลสำเร็จ', 'success');
-        // Update current user
-        currentUser.username = username;
-        localStorage.setItem('srdh_user', JSON.stringify(currentUser));
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        hideLoading();
-      }
-    });
-
-    // Change password
-    document.getElementById('changePasswordBtn').addEventListener('click', async () => {
-      const { value: newPassword } = await Swal.fire({
-        title: 'เปลี่ยนรหัสผ่าน',
-        input: 'password',
-        inputLabel: 'รหัสผ่านใหม่',
-        inputPlaceholder: '••••••••',
-        showCancelButton: true,
-        confirmButtonText: 'เปลี่ยน',
-        cancelButtonText: 'ยกเลิก',
-        inputValidator: (val) => {
-          if (!val || val.length < 4) return 'รหัสผ่านต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
-        }
-      });
-      if (!newPassword) return;
-      showLoading('กำลังเปลี่ยน...');
-      try {
-        // We need to update password via API - we can use users.update with password
-        const res = await users.update(currentUser.id, { password: newPassword });
-        if (!res.success) throw new Error(res.error);
-        showToast('เปลี่ยนรหัสผ่านสำเร็จ', 'success');
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        hideLoading();
-      }
-    });
 
     // Tab switching
     document.getElementById('tabProfile').addEventListener('click', function() {
@@ -457,17 +352,72 @@
       loadUsers();
     });
 
-    // Add user
+    // Save profile
+    document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+      const user = getCurrentUser();
+      if (!user) return;
+      const data = {
+        username: document.getElementById('profileUsername').value,
+        position: document.getElementById('profilePosition').value,
+      };
+      showLoading('กำลังบันทึก...');
+      try {
+        const res = await users.update(user.id, data);
+        if (!res.success) throw new Error(res.error);
+        // Update local storage
+        const updatedUser = { ...user, ...data };
+        localStorage.setItem('srdh_user', JSON.stringify(updatedUser));
+        showToast('บันทึกข้อมูลส่วนตัวสำเร็จ', 'success');
+        loadProfile();
+      } catch (err) {
+        showToast('บันทึกไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Change password
+    document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+      const { value: newPassword } = await Swal.fire({
+        title: 'เปลี่ยนรหัสผ่าน',
+        input: 'password',
+        inputLabel: 'รหัสผ่านใหม่',
+        inputPlaceholder: 'กรอกรหัสผ่านใหม่',
+        showCancelButton: true,
+        confirmButtonText: 'เปลี่ยน',
+        cancelButtonText: 'ยกเลิก',
+        inputValidator: (val) => {
+          if (!val || val.length < 4) return 'รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';
+          return null;
+        }
+      });
+      if (!newPassword) return;
+
+      showLoading('กำลังเปลี่ยนรหัสผ่าน...');
+      try {
+        const user = getCurrentUser();
+        const res = await users.update(user.id, { password: newPassword });
+        if (!res.success) throw new Error(res.error);
+        showToast('เปลี่ยนรหัสผ่านสำเร็จ', 'success');
+      } catch (err) {
+        showToast('เปลี่ยนไม่สำเร็จ: ' + err.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    });
+
     document.getElementById('addUserBtn').addEventListener('click', addUser);
 
     // Init
-    const user = requireAuth();
+    const user = requireRole(['admin', 'manager', 'editor', 'checker', 'staff']);
     if (user) {
       await loadLayout();
-      await loadProfile();
-      // If user has permission to manage users, load users but hidden initially
-      if (user.role === 'admin' || user.role === 'manager') {
-        // Preload users when tab is clicked
+      loadProfile();
+      // If admin or manager, show users tab
+      if (['admin', 'manager'].includes(user.role)) {
+        document.getElementById('tabUsers').style.display = 'inline-block';
+      } else {
+        document.getElementById('tabUsers').style.display = 'none';
       }
     }
   </script>
