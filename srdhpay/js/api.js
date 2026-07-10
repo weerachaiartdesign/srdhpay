@@ -1,4 +1,4 @@
-// js/api.js - API Client for Srdh Pay
+// js/api.js - API Client
 
 const API_BASE = 'https://srdhpay-api.weerachaiartdesign.workers.dev/api';
 
