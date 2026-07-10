@@ -81,7 +81,7 @@
 
   <script type="module">
     import { loadLayout, requireRole, formatThaiDate, formatCurrency, showToast, showLoading, hideLoading } from './js/app.js';
-    import { register, settings, auth, statusMap, statusColors } from './js/api.js';
+    import { register, settings, users, statusMap, statusColors } from './js/api.js';
 
     let currentData = [];
     let selectedUuids = [];
@@ -118,10 +118,8 @@
           });
         }
         // Editors (for assign)
-        const usersRes = await fetch('/api/users', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('srdh_token')}` }
-        });
-        const usersData = await usersRes.json();
+        import { users } from './js/api.js';
+        const usersData = await users.list();
         if (usersData.success) {
           editors = usersData.data.filter(u => u.role === 'editor' && u.active === 1);
         }
