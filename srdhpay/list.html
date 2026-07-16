@@ -84,11 +84,6 @@
   <script src="assets/js/api.js"></script>
   <script src="assets/js/app.js"></script>
   <script>
-    if (App.requireLogin()) {
-      App.loadComponents();
-      init();
-    }
-
     const state = {
       page: 1,
       pageSize: Pref.get('list_pageSize', 50),
@@ -98,6 +93,11 @@
       dept: Pref.get('list_dept', ''),
       status: Pref.get('list_status', '')
     };
+
+    if (App.requireLogin()) {
+      App.loadComponents();
+      init();
+    }
 
     async function init() {
       document.getElementById('pageSize').value = state.pageSize;
